@@ -114,8 +114,40 @@ public class DBHelper extends SQLiteOpenHelper {
                 null);
 
 
-        if (cursor != null) {
+        if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
+        }else{
+            return null;
+        }
+
+        Pokemon pokemon = new Pokemon(
+                cursor.getString(0),
+                cursor.getString(1),
+                cursor.getInt(2),
+                cursor.getString(3)
+        );
+
+        return pokemon;
+    }
+
+    public Pokemon getPokemonByName(String name) {
+
+        sqLiteDatabase = this.getReadableDatabase();
+
+        Cursor cursor = sqLiteDatabase.query( Pokemon.TABLE,
+                null,
+                Pokemon.Column.name + " = ? ",
+                new String[] { name },
+                null,
+                null,
+                null,
+                null);
+
+
+        if (cursor != null && cursor.getCount() > 0) {
+            cursor.moveToFirst();
+        }else{
+            return null;
         }
 
         Pokemon pokemon = new Pokemon(

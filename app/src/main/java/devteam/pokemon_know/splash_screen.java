@@ -3,6 +3,7 @@ package devteam.pokemon_know;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
@@ -40,6 +41,7 @@ public class splash_screen extends Activity {
 
     private Handler myHandler;
     private DBHelper mHelper;
+    private SharedPreferences sp;
 
     private final String urlDownload = "http://192.168.0.188:7777/first_pokemon";
     private String imgUrl;
@@ -55,7 +57,9 @@ public class splash_screen extends Activity {
     }
 
     private void initDatabase(){
-        getPokemonData();
+        sp = getSharedPreferences("PREF_Check_First_Load", Context.MODE_PRIVATE);
+        if(sp.getBoolean("LOADED", false))
+            getPokemonData();
         myHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -76,7 +80,6 @@ public class splash_screen extends Activity {
         client.newCall(request).enqueue(new Callback() {
             @Override
             public void onFailure(Call call, IOException e) {
-                Log.e("Test", e.toString());
                 getPokemonData();
             }
 
@@ -96,6 +99,10 @@ public class splash_screen extends Activity {
                                 "pokemon"+object.getString("id").toString()
                         ));
                     }
+
+                    SharedPreferences.Editor editor = sp.edit();
+                    editor.putBoolean("LOADED", true);
+                    editor.commit();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
