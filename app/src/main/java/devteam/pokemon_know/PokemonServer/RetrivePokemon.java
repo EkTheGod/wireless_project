@@ -158,6 +158,9 @@ public class RetrivePokemon extends Thread {
         for( int i=0;i<markerArrayList.size();i++ ){
             if( !markerArrayList.get(i).getTitle().equals(name) )
                 markerArrayList.get(i).setVisible(false);
+            else if(name.length()<=0){
+                markerArrayList.get(i).setVisible(true);
+            }
             else
                 markerArrayList.get(i).setVisible(true);
         }

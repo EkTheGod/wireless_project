@@ -67,7 +67,7 @@ public class splash_screen extends Activity {
             public void run() {
                 finish();
                 Intent intent;
-                if( AccessToken.getCurrentAccessToken().isExpired() )
+                if( AccessToken.getCurrentAccessToken() ==null || AccessToken.getCurrentAccessToken().isExpired() )
                     intent = new Intent(getApplicationContext(), LoginActivity.class);
                 else
                     intent = new Intent(getApplicationContext(), MainActivity.class);
