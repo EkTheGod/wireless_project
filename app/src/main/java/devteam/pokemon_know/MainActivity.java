@@ -26,8 +26,10 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -77,6 +79,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private GoogleApiClient mGoogleApiClient;
     private Location location;
 
+    private Button filterButton;
+    private AutoCompleteTextView autoCompleteTextView;
+
+
+
 
 
 
@@ -97,6 +104,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         }, 1000);
 //        reqPermission();
+        autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.search);
+        filterButton = (Button) findViewById(R.id.button);
+        filterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                retrivePokemon.filterPokemon(autoCompleteTextView.getText().toString());
+            }
+        });
 
     }
 

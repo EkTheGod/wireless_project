@@ -45,6 +45,8 @@ public class RetrivePokemon extends Thread {
     private HashMap<String,Boolean> pokemonCheck;
     private ArrayList<Marker> markerArrayList;
 
+    private String filterPokemonName;
+
     public RetrivePokemon(Context context, GoogleMap mMap,ArrayList<Marker> markerArrayList,ArrayList<PostPokemon> postPokemonArrayList){
         this.mMap = mMap;
         postPokemonArrayList = new ArrayList<PostPokemon>();
@@ -86,6 +88,8 @@ public class RetrivePokemon extends Thread {
                                 object.getString("endTime").toString(),
                                 object.getString("user").toString()
                         ));
+//                        if( filterPokemonName!=null && filterPokemonName.length() > 0 && filterPokemonName.equals(object.getString("pokemonName").toString()))
+//                            continue;
                         if( pokemonCheck.containsKey(object.getString("postId").toString()) ) {
                             continue;
                         }
@@ -111,7 +115,7 @@ public class RetrivePokemon extends Thread {
         while (true) {
             getPostPokemon();
             try {
-                Thread.sleep(3000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -133,6 +137,10 @@ public class RetrivePokemon extends Thread {
 //                        .snippet("I Love You.")
                         .icon(BitmapDescriptorFactory.fromResource(resourceId)));
                 pokeMark.setTag(pokemonId);
+                if( filterPokemonName != null ){
+                    if( filterPokemonName.equals(pokemonName) )
+                        pokeMark.setVisible(true);
+                }
                 markerArrayList.add(pokeMark);
             } // This is your code
         };
@@ -143,5 +151,15 @@ public class RetrivePokemon extends Thread {
         Bitmap imageBitmap = BitmapFactory.decodeResource(context.getResources(),context.getResources().getIdentifier(iconName, "drawable", context.getPackageName()));
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth()/width, imageBitmap.getHeight()/height, false);
         return resizedBitmap;
+    }
+
+    public void filterPokemon(String name){
+        filterPokemonName = name;
+        for( int i=0;i<markerArrayList.size();i++ ){
+            if( !markerArrayList.get(i).getTitle().equals(name) )
+                markerArrayList.get(i).setVisible(false);
+            else
+                markerArrayList.get(i).setVisible(true);
+        }
     }
 }//end class
