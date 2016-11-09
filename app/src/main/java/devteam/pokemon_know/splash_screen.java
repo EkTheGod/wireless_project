@@ -7,6 +7,8 @@ import android.os.Bundle;
 
 import android.os.Handler;
 
+import devteam.pokemon_know.Model.DBHelper;
+
 /**
  * Created by ekach on 8/11/2559.
  */
@@ -14,6 +16,7 @@ import android.os.Handler;
 public class splash_screen extends Activity {
 
     private Handler myHandler;
+    private DBHelper mHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +31,10 @@ public class splash_screen extends Activity {
                 startActivity(intent);
             }
         }, 3000);
-
+        initDatabase();
     }
-}
+
+    private void initDatabase(){
+        mHelper = new DBHelper(this);
+    }
+}//end splash screen
