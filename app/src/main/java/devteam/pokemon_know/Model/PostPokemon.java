@@ -24,13 +24,15 @@ public class PostPokemon {
     private String pokemonName; //FK
     private String Lat;
     private String Long;
+    private String startTime;
+    private String endTime;
     private String user;
 
     public PostPokemon() {
 
     }// def con
 
-    public PostPokemon(String postId, String pokemonName, String Lat, String Long, String user) {
+    public PostPokemon(String postId, String pokemonName, String Lat, String Long,String startTime, String endTime, String user) {
         this.postId = postId;
         this.pokemonName = pokemonName;
         this.Lat = Lat;

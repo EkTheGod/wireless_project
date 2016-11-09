@@ -97,22 +97,24 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d("DBHelper","Add Pokemon Name : "+pokemon.getName()+" Complete!");
     }
 
-    public Pokemon getFriend(String id) {
+    public Pokemon getPokemon(String name) {
 
         sqLiteDatabase = this.getReadableDatabase();
 
         Cursor cursor = sqLiteDatabase.query( Pokemon.TABLE,
                 null,
-                Pokemon.Column.id + " = ? ",
-                new String[] { id },
+                Pokemon.Column.name + " = ? ",
+                new String[] { name },
                 null,
                 null,
                 null,
                 null);
 
 
-        if (cursor != null) {
+        if (cursor != null && cursor.getCount() > 0) {
             cursor.moveToFirst();
+        }else{
+            return null;
         }
 
         Pokemon pokemon = new Pokemon(
