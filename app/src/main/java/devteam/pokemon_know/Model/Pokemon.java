@@ -20,16 +20,32 @@ public  class Pokemon {
     private String id;
     private String name;
     private int gen;
-    private String imgPath;
+    private int imgPath;
 
     public Pokemon(){
 
     }//Def Con
 
-    public Pokemon(String pokemonId, String pokemonName, int generation, String imgPath){
+    public Pokemon(String pokemonId, String pokemonName, int generation, int imgPath){
         id = pokemonId;
         name = pokemonName;
         gen = generation;
         this.imgPath = imgPath;
+    }
+
+    public String getId(){
+        return id;
+    }
+
+    public String getName(){
+        return name;
+    }
+
+    public int getGeneration(){
+        return  gen;
+    }
+
+    public int getImgPath(){
+        return  imgPath;
     }
 }//end Pokemon

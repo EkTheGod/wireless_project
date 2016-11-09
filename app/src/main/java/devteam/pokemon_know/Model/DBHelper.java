@@ -1,5 +1,6 @@
 package devteam.pokemon_know.Model;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -13,6 +14,8 @@ import android.util.Log;
 public class DBHelper extends SQLiteOpenHelper {
     private static final String TAG  = "DBHelper";
     private static final String DBName = "pokemonKnow.db";
+
+    private SQLiteDatabase sqLiteDatabase;
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -76,5 +79,19 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context){
         super(context,DBName,null,1);
+    }
+
+    public void addPokemon(Pokemon pokemon){
+        sqLiteDatabase = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+        //values.put(Friend.Column.ID, friend.getId());
+        values.put(Pokemon.Column.id, pokemon.getId());
+        values.put(Pokemon.Column.name, pokemon.getName());
+        values.put(Pokemon.Column.gen, pokemon.getGeneration());
+        values.put(Pokemon.Column.imgPath, pokemon.getImgPath());
+
+        sqLiteDatabase.insert(Pokemon.TABLE, null, values);
+
+        sqLiteDatabase.close();
     }
 }//end class
