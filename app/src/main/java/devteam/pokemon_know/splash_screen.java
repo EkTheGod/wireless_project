@@ -14,6 +14,9 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.facebook.AccessToken;
+import com.facebook.FacebookSdk;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -47,6 +50,7 @@ public class splash_screen extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        FacebookSdk.sdkInitialize(getApplicationContext());
         super.onCreate(savedInstanceState);
         setContentView(R.layout.splash_screen);
         myHandler = new Handler();
@@ -62,7 +66,11 @@ public class splash_screen extends Activity {
             @Override
             public void run() {
                 finish();
-                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                Intent intent;
+                if( AccessToken.getCurrentAccessToken().isExpired() )
+                    intent = new Intent(getApplicationContext(), LoginActivity.class);
+                else
+                    intent = new Intent(getApplicationContext(), MainActivity.class);
                 startActivity(intent);
             }
         }, 3000);
