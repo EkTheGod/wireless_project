@@ -7,6 +7,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * Created by wachirapong on 11/9/2016 AD.
@@ -97,7 +100,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Log.d("DBHelper","Add Pokemon Name : "+pokemon.getName()+" Complete!");
     }
 
-    public Pokemon getFriend(String id) {
+    public Pokemon getPokemon(String id) {
 
         sqLiteDatabase = this.getReadableDatabase();
 
@@ -123,5 +126,29 @@ public class DBHelper extends SQLiteOpenHelper {
         );
 
         return pokemon;
+    }
+
+    public List<String> getPokemonList(){
+        sqLiteDatabase = this.getWritableDatabase();
+
+        List<String> list = new ArrayList<>();
+        String[] columnArgs = new String[]{
+                Pokemon.Column.name
+        };
+
+        Cursor cursor = sqLiteDatabase.query(Pokemon.TABLE, columnArgs, null, null, null, null, null); //(table, column, where, where arg, groupby, having, orderby)
+
+        Log.d("Size", String.valueOf(cursor.getCount()));
+        if (cursor != null) {
+            cursor.moveToFirst();
+        }
+
+        while(!cursor.isAfterLast()) {
+            //Log.d("Auto complete load", cursor.getString(0));
+            list.add(cursor.getString(0));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return list;
     }
 }//end class
