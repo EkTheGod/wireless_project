@@ -1,12 +1,24 @@
 package devteam.pokemon_know;
 
+import android.Manifest;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Handler;
 import android.content.res.Resources;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -14,44 +26,38 @@ import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationAvailability;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.logging.LogRecord;
+
 
 import devteam.pokemon_know.Model.DBHelper;
-import devteam.pokemon_know.Model.Pokemon;
+import devteam.pokemon_know.Model.PostPokemon;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.IOException;
-import java.util.ArrayList;
-
-import devteam.pokemon_know.Model.Pokemon;
 import devteam.pokemon_know.PokemonServer.RetrivePokemon;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
+
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
@@ -62,19 +68,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LinearLayout linear;
     private RetrivePokemon retrivePokemon;
     private ArrayList<Marker> markerArrayList;
+    private ArrayList<PostPokemon> postPokemonArrayList;
+    private GoogleApiClient mGoogleApiClient;
+    private Location location;
+
+
+
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-//        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-//                .findFragmentById(R.id.map);
-//        mapFragment.getMapAsync(this);
+        // Create a GoogleApiClient instance
 
         init();
-
         mHandler = new Handler();
         mHandler.postDelayed(new Runnable() {
             @Override
@@ -83,7 +91,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 getAutoComplete();
             }
         }, 1000);
+//        reqPermission();
+
     }
+
+
 
     private void getAutoComplete() {
         adapter = new ArrayAdapter<String>(this,
@@ -91,7 +103,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         search.setAdapter(adapter);
     }
 
-    private void init(){
+    private void init() {
         linear = (LinearLayout) findViewById(R.id.activity_main);
         linear.setBackgroundColor(Color.rgb(202, 101, 34));
         search = (AutoCompleteTextView) findViewById(R.id.search);
@@ -102,15 +114,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
-    public void onBackPressed(){
+    public void onBackPressed() {
         final AlertDialog.Builder exitDialog = new AlertDialog.Builder(this);
         exitDialog.setTitle("Exit Application");
-        exitDialog.setPositiveButton("Cancel",new DialogInterface.OnClickListener() {
+        exitDialog.setPositiveButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
             }
         });
-        exitDialog.setNegativeButton("Exit",new DialogInterface.OnClickListener() {
+        exitDialog.setNegativeButton("Exit", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 finish();
@@ -122,14 +134,47 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.clear();
-        retrivePokemon = new RetrivePokemon(getApplicationContext(),mMap, markerArrayList);
+        retrivePokemon = new RetrivePokemon(getApplicationContext(), mMap, markerArrayList,postPokemonArrayList);
         retrivePokemon.start();
-//        LatLng sydney = new LatLng(-34, 151);
+//        lManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+//        LatLng sydney = new LatLng(getLastBestLocation().getLatitude(), getLastBestLocation().getLongitude());
 //        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+        mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
+            @Override
+            public void onCameraMoveStarted(int i) {
+
+            }
+        });
+
+        mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
+            @Override
+            public void onCameraIdle() {
+                // Cleaning all the markers.
+//                if (mMap != null) {
+//                    mMap.clear();
+//                }
+//                markerArrayList.get(1).set
+                for(int i=0;i<markerArrayList.size();i++){
+                    String id = markerArrayList.get(i).getTag()+"";
+                    markerArrayList.get(i).setIcon(BitmapDescriptorFactory.fromBitmap(resizeMapIcons("pokemon"+id,2,2)));
+                }
+//                mPosition = mMap.getCameraPosition().target;
+//                mZoom = mMap.getCameraPosition().zoom;
+
+            }
+        });
+
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                Log.d("Camera",latLng.latitude+":"+latLng.longitude);
+            }
+        });
+
     }
 
-    private void sentRequest(){
+    private void sentRequest() {
         final String uri = "http://192.168.0.188:7777/addpokemon";
         //final String body = String.format("\"postId\": \"%s\",\"pokemonName\": \"%s\", \"lat\": \"%s\", \"long\": \"%s\", \"user\": \"%s\", \"aek\", \"pikachu\", \"lat\", \"long\", \"user\"");
 
@@ -160,7 +205,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
 
             });
-        }catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -220,5 +265,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
 
     }
+
+    public Bitmap resizeMapIcons(String iconName, int width, int height){
+        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(iconName, "drawable", getPackageName()));
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth()/width, imageBitmap.getHeight()/height, false);
+        return resizedBitmap;
+    }
+
 
 }//end Activity

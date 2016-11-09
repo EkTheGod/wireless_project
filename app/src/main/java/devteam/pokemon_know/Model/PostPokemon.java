@@ -40,4 +40,8 @@ public class PostPokemon {
         this.user = user;
     }// def con
 
+    public String getEndTime(){
+        return endTime;
+    }
+
 }//end PostPokemon

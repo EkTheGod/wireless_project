@@ -25,8 +25,6 @@ import java.util.Date;
 
 import devteam.pokemon_know.Model.DBHelper;
 import devteam.pokemon_know.Model.Pokemon;
-import it.sephiroth.android.library.picasso.Picasso;
-import it.sephiroth.android.library.picasso.Target;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
@@ -112,48 +110,6 @@ public class splash_screen extends Activity {
         });
     }//
 
-    private void saveImageToInternalStorage(String url){
-        Picasso.with(getApplicationContext())
-                .load(url)
-                .into(new Target() {
-                          @Override
-                          public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                              try {
-                                  String root = Environment.getExternalStorageDirectory().toString();
-                                  File myDir = new File(root + "/PokemonImage/");
 
-                                  if (!myDir.exists()) {
-                                      myDir.mkdirs();
-                                  }
-
-                                  String name = new Date().toString() + ".png";
-                                  myDir = new File(myDir, name);
-                                  FileOutputStream out = new FileOutputStream(myDir);
-                                  bitmap.compress(Bitmap.CompressFormat.JPEG, 90, out);
-
-                                  out.flush();
-                                  out.close();
-                              } catch(Exception e){
-                                  // some action
-                              }
-                          }
-
-                          @Override
-                          public void onBitmapFailed(Drawable errorDrawable) {
-                          }
-
-                          @Override
-                          public void onPrepareLoad(Drawable placeHolderDrawable) {
-                          }
-                      }
-                );
-    }
-
-    /*
-    Resources resources = context.getResources();
-final int resourceId = resources.getIdentifier(name, "drawable",
-   context.getPackageName());
-return resources.getDrawable(resourceId);
-     */
 
 }//end splash screen

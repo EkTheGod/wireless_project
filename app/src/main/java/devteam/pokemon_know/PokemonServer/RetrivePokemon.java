@@ -45,9 +45,10 @@ public class RetrivePokemon extends Thread {
     private HashMap<String,Boolean> pokemonCheck;
     private ArrayList<Marker> markerArrayList;
 
-    public RetrivePokemon(Context context, GoogleMap mMap,ArrayList<Marker> markerArrayList){
+    public RetrivePokemon(Context context, GoogleMap mMap,ArrayList<Marker> markerArrayList,ArrayList<PostPokemon> postPokemonArrayList){
         this.mMap = mMap;
         postPokemonArrayList = new ArrayList<PostPokemon>();
+        this.postPokemonArrayList = postPokemonArrayList;
         this.context =context;
         dbHelper = new DBHelper(context);
         pokemonCheck = new HashMap<String,Boolean>();
@@ -76,15 +77,15 @@ public class RetrivePokemon extends Thread {
                     JSONArray Jarray = new JSONArray(jsonData);
                     for (int i = 0; i < Jarray.length(); i++) {
                         JSONObject object = Jarray.getJSONObject(i);
-//                        postPokemonArrayList.add(new PostPokemon(
-//                                object.getString("postId").toString(),
-//                                object.getString("pokemonName").toString(),
-//                                object.getString("Lat").toString(),
-//                                object.getString("Long").toString(),
-//                                object.getString("startTime").toString(),
-//                                object.getString("endTime").toString(),
-//                                object.getString("user").toString()
-//                        ));
+                        postPokemonArrayList.add(new PostPokemon(
+                                object.getString("postId").toString(),
+                                object.getString("pokemonName").toString(),
+                                object.getString("lat").toString(),
+                                object.getString("long").toString(),
+                                object.getString("startTime").toString(),
+                                object.getString("endTime").toString(),
+                                object.getString("user").toString()
+                        ));
                         if( pokemonCheck.containsKey(object.getString("postId").toString()) ) {
                             continue;
                         }
@@ -110,7 +111,7 @@ public class RetrivePokemon extends Thread {
         while (true) {
             getPostPokemon();
             try {
-                Thread.sleep(10000);
+                Thread.sleep(3000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -129,8 +130,9 @@ public class RetrivePokemon extends Thread {
                 Marker pokeMark = mMap.addMarker(new MarkerOptions()
                         .position(latLng)
                         .title(pokemonName)
-                        .snippet("I Love You.")
+//                        .snippet("I Love You.")
                         .icon(BitmapDescriptorFactory.fromResource(resourceId)));
+                pokeMark.setTag(pokemonId);
                 markerArrayList.add(pokeMark);
             } // This is your code
         };
@@ -139,7 +141,7 @@ public class RetrivePokemon extends Thread {
 
     public Bitmap resizeMapIcons(String iconName,int width, int height){
         Bitmap imageBitmap = BitmapFactory.decodeResource(context.getResources(),context.getResources().getIdentifier(iconName, "drawable", context.getPackageName()));
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth()/width, imageBitmap.getHeight()/height, false);
         return resizedBitmap;
     }
 }//end class
