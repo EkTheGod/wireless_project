@@ -20,13 +20,13 @@ public  class Pokemon {
     private String id;
     private String name;
     private int gen;
-    private int imgPath;
+    private String imgPath;
 
     public Pokemon(){
 
     }//Def Con
 
-    public Pokemon(String pokemonId, String pokemonName, int generation, int imgPath){
+    public Pokemon(String pokemonId, String pokemonName, int generation, String imgPath){
         id = pokemonId;
         name = pokemonName;
         gen = generation;
@@ -45,7 +45,7 @@ public  class Pokemon {
         return  gen;
     }
 
-    public int getImgPath(){
+    public String getImgPath(){
         return  imgPath;
     }
 }//end Pokemon

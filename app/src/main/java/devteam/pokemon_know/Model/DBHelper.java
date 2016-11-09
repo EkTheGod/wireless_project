@@ -2,6 +2,7 @@ package devteam.pokemon_know.Model;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
@@ -20,7 +21,7 @@ public class DBHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_POKEMON_TABLE = String.format("CREATE TABLE %s " +
-                        "(%s VARCHAR(8) PRIMARY KEY , %s TEXT, %s INTEGER, %s TEXT)",
+                        "(%s INTEGER PRIMARY KEY , %s TEXT, %s INTEGER, %s TEXT)",
                 Pokemon.TABLE,
                 Pokemon.Column.id,
                 Pokemon.Column.name,
@@ -93,5 +94,34 @@ public class DBHelper extends SQLiteOpenHelper {
         sqLiteDatabase.insert(Pokemon.TABLE, null, values);
 
         sqLiteDatabase.close();
+        Log.d("DBHelper","Add Pokemon Name : "+pokemon.getName()+" Complete!");
+    }
+
+    public Pokemon getFriend(String id) {
+
+        sqLiteDatabase = this.getReadableDatabase();
+
+        Cursor cursor = sqLiteDatabase.query( Pokemon.TABLE,
+                null,
+                Pokemon.Column.id + " = ? ",
+                new String[] { id },
+                null,
+                null,
+                null,
+                null);
+
+
+        if (cursor != null) {
+            cursor.moveToFirst();
+        }
+
+        Pokemon pokemon = new Pokemon(
+                cursor.getString(0),
+                cursor.getString(1),
+                cursor.getInt(2),
+                cursor.getString(3)
+        );
+
+        return pokemon;
     }
 }//end class
