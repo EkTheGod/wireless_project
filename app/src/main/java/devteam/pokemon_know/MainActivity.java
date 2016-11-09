@@ -1,6 +1,7 @@
 package devteam.pokemon_know;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -17,14 +18,20 @@ import android.os.Build;
 import android.os.Handler;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -61,10 +68,12 @@ import devteam.pokemon_know.PokemonServer.RetrivePokemon;
 
 import okhttp3.Response;
 
+import static devteam.pokemon_know.R.id.search_dialog;
+
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
     private GoogleMap mMap;
     private Handler mHandler;
-    private AutoCompleteTextView search;
+    private AutoCompleteTextView search, search_dialog;
     private ArrayAdapter<String> adapter;
     private LinearLayout linear;
     private RetrivePokemon retrivePokemon;
@@ -72,8 +81,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private ArrayList<PostPokemon> postPokemonArrayList;
     private GoogleApiClient mGoogleApiClient;
     private Location location;
-
-
+    private FloatingActionButton fab;
+    private DBHelper db;
+    private ImageView image;
 
 
 
@@ -84,30 +94,71 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Create a GoogleApiClient instance
 
         init();
-        mHandler = new Handler();
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                //sentRequest();
-                getAutoComplete();
-            }
-        }, 1000);
-//        reqPermission();
-
+        fab.setOnClickListener(clickFloat);
     }
 
+    private View.OnClickListener clickFloat = new View.OnClickListener() {
+        @Override
+        public void onClick(android.view.View v) {
+            final Dialog dialog = new Dialog(MainActivity.this);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            dialog.setContentView(R.layout.customdialog);
+            dialog.setCancelable(true);
+
+            search_dialog = (AutoCompleteTextView) dialog.findViewById(R.id.search_dialog);
+            search_dialog.setAdapter(getAutoComplete());
+
+            search_dialog.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                @Override
+                public void onItemClick (AdapterView<?> parent, View view, int position, long id) {
+                    Log.d("select", search_dialog.getText().toString());
+                    Resources resources = getApplicationContext().getResources();
+                    int resourceId = resources.getIdentifier(db.getPokemonID(search_dialog.getText().toString()), "drawable",
+                            getApplicationContext().getPackageName());
+
+                    if(image == null)
+                        image = (ImageView) dialog.findViewById(R.id.imageDialog);
+                    else
+                        image.setImageResource(resourceId);
+                }
+            });
+
+            Button button1 = (Button)dialog.findViewById(R.id.sentbutton);
+            button1.setOnClickListener(new android.view.View.OnClickListener() {
+                public void onClick(View v) {
+                    sentRequest(search_dialog.getText().toString());
+                    dialog.cancel();
+                }
+            });
+
+            Button button2 = (Button)dialog.findViewById(R.id.cancelbutton);
+            button2.setOnClickListener(new android.view.View.OnClickListener() {
+                public void onClick(View v) {
+                    dialog.cancel();
+                }
+            });
+
+            dialog.show();
+        }
+    };
 
 
-    private void getAutoComplete() {
-        adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_dropdown_item_1line, new DBHelper(this).getPokemonList());
-        search.setAdapter(adapter);
+
+    private ArrayAdapter<String> getAutoComplete() {
+        return new ArrayAdapter<String>(this,
+                android.R.layout.simple_dropdown_item_1line, db.getPokemonList());
     }
 
     private void init() {
+        db = new DBHelper(this);
         linear = (LinearLayout) findViewById(R.id.activity_main);
         linear.setBackgroundColor(Color.rgb(202, 101, 34));
+
         search = (AutoCompleteTextView) findViewById(R.id.search);
+        search.setAdapter(getAutoComplete());
+
+        fab = (FloatingActionButton) findViewById(R.id.fab);
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -175,16 +226,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
-    private void sentRequest() {
-        final String uri = "http://192.168.0.188:7777/addpokemon";
-        //final String body = String.format("\"postId\": \"%s\",\"pokemonName\": \"%s\", \"lat\": \"%s\", \"long\": \"%s\", \"user\": \"%s\", \"aek\", \"pikachu\", \"lat\", \"long\", \"user\"");
+    private void print(String text){
+        Toast.makeText(getApplicationContext(), text,
+                Toast.LENGTH_SHORT).show();
+    }
 
+    private void sentRequest(String pokemonName){
+        final String uri = "http://192.168.0.188:7777/addpokemon";
         final OkHttpClient client = new OkHttpClient();
-        //final HttpPost postMethod = new HttpPost(uri);
 
         RequestBody formBody = new FormBody.Builder()
                 .add("postId", "12345")
-                .add("pokemonName", "Rachanon")
+                .add("pokemonName", pokemonName)
                 .add("lat", "-")
                 .add("long", "-")
                 .add("user", "noneiei")
@@ -203,68 +256,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
+                    String jsonData = response.body().string();
+
                 }
 
             });
-        } catch (Exception e) {
+        }catch (Exception e) {
             e.printStackTrace();
         }
-
-//        try {
-//            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-//            nameValuePairs.add(new BasicNameValuePair("postId", "12345"));
-//            nameValuePairs.add(new BasicNameValuePair("pokemonName", "Rachanon"));
-//            nameValuePairs.add(new BasicNameValuePair("lat", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("long", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("user", "noneiei"));
-//            postMethod.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-//
-//            // Execute HTTP Post Request
-//            HttpResponse response = client.execute(postMethod);
-//        } catch (ClientProtocolException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-
-//        OkHttpClient client = new OkHttpClient();
-//        Request request = new Request.Builder()
-//                .url(uri)
-//                .build();
-//        Response responses = null;
-//
-//        try {
-//            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-//            nameValuePairs.add(new BasicNameValuePair("postId", "12345"));
-//            nameValuePairs.add(new BasicNameValuePair("pokemonName", "Rachanon"));
-//            nameValuePairs.add(new BasicNameValuePair("lat", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("long", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("user", "noneiei"));
-//            postMethod.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-//
-//            // Execute HTTP Post Request
-//            HttpResponse response = client.execute(postMethod);
-//        } catch (ClientProtocolException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        client.newCall(request).enqueue(new Callback() {
-//            @Override
-//            public void onFailure(Call call, IOException e) {
-//                Log.e("Test", e.toString());
-//            }
-//
-//            @Override
-//            public void onResponse(Call call, Response response) throws IOException {
-//
-//            }
-//
-//        });
-
-
     }
 
     public Bitmap resizeMapIcons(String iconName, int width, int height){
