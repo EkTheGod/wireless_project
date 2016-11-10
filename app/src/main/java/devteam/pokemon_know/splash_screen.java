@@ -59,8 +59,8 @@ public class splash_screen extends Activity {
     }
 
     private void initDatabase(){
-        sp = getSharedPreferences("PREF_Check_First_Load", Context.MODE_PRIVATE);
-        if(sp.getBoolean("LOADED", false))
+//        sp = getSharedPreferences("PREF_Check_First_Load", Context.MODE_PRIVATE);
+//        if(sp.getBoolean("LOADED", false))
             getPokemonData();
         myHandler.postDelayed(new Runnable() {
             @Override
@@ -106,9 +106,9 @@ public class splash_screen extends Activity {
                         ));
                     }
 
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putBoolean("LOADED", true);
-                    editor.commit();
+//                    SharedPreferences.Editor editor = sp.edit();
+//                    editor.putBoolean("LOADED", true);
+//                    editor.commit();
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }

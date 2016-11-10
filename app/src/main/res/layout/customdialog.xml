@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/customlayout"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:background="@drawable/bg"
+    android:layout_height="450dp"
+    android:layout_width="384dp"
+    android:orientation="vertical">
+
+
+    <ImageView
+        android:layout_width="130dp"
+        android:layout_height="130dp"
+        android:id="@+id/imageDialog"
+        android:layout_marginTop="50dp"
+        android:src="@drawable/pokemon133"
+        android:paddingLeft="-30dp"
+        android:layout_gravity="center"/>
+
+    <AutoCompleteTextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="textPersonName"
+        android:ems="10"
+        android:layout_below="@+id/imageDialog"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="43dp"
+        android:id="@+id/search_dialog"
+        android:text="Eevee"
+        android:layout_gravity="center"/>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:layout_marginTop="50dp">
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:id="@+id/sentbutton"
+            android:background="@drawable/yes"
+            android:layout_alignParentBottom="true"
+            android:layout_toStartOf="@+id/cancelbutton"
+            android:layout_marginEnd="35dp"
+            android:layout_gravity="center"/>
+        <Button
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginEnd="36dp"
+            android:id="@+id/cancelbutton"
+            android:background="@drawable/no"
+            android:layout_gravity="center" />
+
+
+    </LinearLayout>
+
+
+</LinearLayout>

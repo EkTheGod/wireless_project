@@ -183,4 +183,33 @@ public class DBHelper extends SQLiteOpenHelper {
         cursor.close();
         return list;
     }
+
+    public String getPokemonID(String pokemonName){
+        sqLiteDatabase = this.getWritableDatabase();
+
+        String ID = new String();
+        String[] columnArgs = new String[]{
+                Pokemon.Column.id
+        };
+        String whereClause = Pokemon.Column.name + "=?";
+        String[] whereArgs = new String[] {
+                pokemonName
+        };
+
+        Cursor cursor = sqLiteDatabase.query(Pokemon.TABLE, columnArgs, whereClause, whereArgs, null, null, null); //(table, column, where, where arg, groupby, having, orderby)
+
+        Log.d("Size", String.valueOf(cursor.getCount()));
+        if (cursor != null) {
+            cursor.moveToFirst();
+        }
+
+        while(!cursor.isAfterLast()) {
+            //Log.d("Auto complete load", cursor.getString(0));
+            ID = "pokemon"+cursor.getString(0);
+            cursor.moveToNext();
+        }
+        cursor.close();
+
+        return ID;
+    }
 }//end class

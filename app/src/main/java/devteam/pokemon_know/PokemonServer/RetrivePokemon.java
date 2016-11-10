@@ -57,7 +57,7 @@ public class RetrivePokemon extends Thread {
         this.markerArrayList = markerArrayList;
     }
 
-    private void getPostPokemon() {
+    public void getPostPokemon() {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
                 .url(urlGetPostPokemon)
@@ -90,11 +90,11 @@ public class RetrivePokemon extends Thread {
                         ));
 //                        if( filterPokemonName!=null && filterPokemonName.length() > 0 && filterPokemonName.equals(object.getString("pokemonName").toString()))
 //                            continue;
-                        if( pokemonCheck.containsKey(object.getString("postId").toString()) ) {
+                        if( pokemonCheck.containsKey(object.getString("_id").toString()) ) {
                             continue;
                         }
                         else{
-                            pokemonCheck.put(object.getString("postId").toString(),true);
+                            pokemonCheck.put(object.getString("_id").toString(),true);
                         }
                         Pokemon pokemon = dbHelper.getPokemonByName(object.getString("pokemonName").toString());
                         if( pokemon != null ){
@@ -115,7 +115,7 @@ public class RetrivePokemon extends Thread {
         while (true) {
             getPostPokemon();
             try {
-                Thread.sleep(10000);
+                Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -156,11 +156,12 @@ public class RetrivePokemon extends Thread {
     public void filterPokemon(String name){
         filterPokemonName = name;
         for( int i=0;i<markerArrayList.size();i++ ){
+            if(name.equals("")) {
+                markerArrayList.get(i).setVisible(true);
+                continue;
+            }
             if( !markerArrayList.get(i).getTitle().equals(name) )
                 markerArrayList.get(i).setVisible(false);
-            else if(name.length()<=0){
-                markerArrayList.get(i).setVisible(true);
-            }
             else
                 markerArrayList.get(i).setVisible(true);
         }

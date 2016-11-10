@@ -1,6 +1,7 @@
 package devteam.pokemon_know;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.app.FragmentTransaction;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -27,9 +28,12 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -52,6 +56,7 @@ import com.google.android.gms.maps.model.Marker;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 
 
 import devteam.pokemon_know.Model.DBHelper;
@@ -68,9 +73,10 @@ import devteam.pokemon_know.PokemonServer.RetrivePokemon;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+    private Random gen;
     private GoogleMap mMap;
     private Handler mHandler;
-    private AutoCompleteTextView search;
+    private AutoCompleteTextView search, search_dialog;
     private ArrayAdapter<String> adapter;
     private LinearLayout linear;
     private RetrivePokemon retrivePokemon;
@@ -82,8 +88,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Button filterButton;
     private AutoCompleteTextView autoCompleteTextView;
 
+    //private FloatingActionButton fab;
 
-
+    private DBHelper db;
+    private ImageView image;
 
 
 
@@ -95,14 +103,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         // Create a GoogleApiClient instance
 
         init();
-        mHandler = new Handler();
-        mHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                //sentRequest();
-                getAutoComplete();
-            }
-        }, 1000);
 //        reqPermission();
         autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.search);
         filterButton = (Button) findViewById(R.id.button);
@@ -112,21 +112,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 retrivePokemon.filterPokemon(autoCompleteTextView.getText().toString());
             }
         });
-
+        gen = new Random();
     }
 
 
 
-    private void getAutoComplete() {
-        adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_dropdown_item_1line, new DBHelper(this).getPokemonList());
-        search.setAdapter(adapter);
+    private ArrayAdapter<String> getAutoComplete() {
+        return new ArrayAdapter<String>(this,
+                android.R.layout.simple_dropdown_item_1line, db.getPokemonList());
     }
 
     private void init() {
+        db = new DBHelper(this);
         linear = (LinearLayout) findViewById(R.id.activity_main);
         linear.setBackgroundColor(Color.rgb(202, 101, 34));
+
         search = (AutoCompleteTextView) findViewById(R.id.search);
+        search.setAdapter(getAutoComplete());
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
@@ -189,23 +191,66 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onMapClick(LatLng latLng) {
                 Log.d("Camera",latLng.latitude+":"+latLng.longitude);
+                final String lat = String.valueOf(latLng.latitude);
+                final String longi = String.valueOf(latLng.longitude);
+
+                final Dialog dialog = new Dialog(MainActivity.this);
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+                dialog.setContentView(R.layout.customdialog);
+                dialog.setCancelable(true);
+
+                search_dialog = (AutoCompleteTextView) dialog.findViewById(R.id.search_dialog);
+                search_dialog.setAdapter(getAutoComplete());
+
+                search_dialog.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                    @Override
+                    public void onItemClick (AdapterView<?> parent, View view, int position, long id) {
+                        Log.d("select", search_dialog.getText().toString());
+                        Resources resources = getApplicationContext().getResources();
+                        int resourceId = resources.getIdentifier(db.getPokemonID(search_dialog.getText().toString()), "drawable",
+                                getApplicationContext().getPackageName());
+
+                        if(image == null)
+                            image = (ImageView) dialog.findViewById(R.id.imageDialog);
+                        else
+                            image.setImageResource(resourceId);
+                    }
+                });
+
+                Button button1 = (Button)dialog.findViewById(R.id.sentbutton);
+                button1.setOnClickListener(new android.view.View.OnClickListener() {
+                    public void onClick(View v) {
+                        sentRequest(search_dialog.getText().toString(), lat, longi);
+                        retrivePokemon.getPostPokemon();
+                        dialog.cancel();
+                    }
+                });
+
+                Button button2 = (Button)dialog.findViewById(R.id.cancelbutton);
+                button2.setOnClickListener(new android.view.View.OnClickListener() {
+                    public void onClick(View v) {
+                        dialog.cancel();
+                    }
+                });
+
+                dialog.show();
+
             }
         });
 
     }
 
-    private void sentRequest() {
+    private void sentRequest(String pokemonName, String lat, String longi){
         final String uri = "http://192.168.0.188:7777/addpokemon";
-        //final String body = String.format("\"postId\": \"%s\",\"pokemonName\": \"%s\", \"lat\": \"%s\", \"long\": \"%s\", \"user\": \"%s\", \"aek\", \"pikachu\", \"lat\", \"long\", \"user\"");
-
         final OkHttpClient client = new OkHttpClient();
-        //final HttpPost postMethod = new HttpPost(uri);
 
         RequestBody formBody = new FormBody.Builder()
-                .add("postId", "12345")
-                .add("pokemonName", "Rachanon")
-                .add("lat", "-")
-                .add("long", "-")
+                .add("postId", gen.nextInt(100000)+"")
+                .add("pokemonName", pokemonName)
+                .add("lat", lat)
+                .add("long", longi)
                 .add("user", "noneiei")
                 .build();
         Request request = new Request.Builder()
@@ -222,68 +267,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 @Override
                 public void onResponse(Call call, Response response) throws IOException {
+                    String jsonData = response.body().string();
+
                 }
 
             });
-        } catch (Exception e) {
+        }catch (Exception e) {
             e.printStackTrace();
         }
-
-//        try {
-//            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-//            nameValuePairs.add(new BasicNameValuePair("postId", "12345"));
-//            nameValuePairs.add(new BasicNameValuePair("pokemonName", "Rachanon"));
-//            nameValuePairs.add(new BasicNameValuePair("lat", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("long", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("user", "noneiei"));
-//            postMethod.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-//
-//            // Execute HTTP Post Request
-//            HttpResponse response = client.execute(postMethod);
-//        } catch (ClientProtocolException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
-
-//        OkHttpClient client = new OkHttpClient();
-//        Request request = new Request.Builder()
-//                .url(uri)
-//                .build();
-//        Response responses = null;
-//
-//        try {
-//            List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>(2);
-//            nameValuePairs.add(new BasicNameValuePair("postId", "12345"));
-//            nameValuePairs.add(new BasicNameValuePair("pokemonName", "Rachanon"));
-//            nameValuePairs.add(new BasicNameValuePair("lat", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("long", "-"));
-//            nameValuePairs.add(new BasicNameValuePair("user", "noneiei"));
-//            postMethod.setEntity(new UrlEncodedFormEntity(nameValuePairs));
-//
-//            // Execute HTTP Post Request
-//            HttpResponse response = client.execute(postMethod);
-//        } catch (ClientProtocolException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        client.newCall(request).enqueue(new Callback() {
-//            @Override
-//            public void onFailure(Call call, IOException e) {
-//                Log.e("Test", e.toString());
-//            }
-//
-//            @Override
-//            public void onResponse(Call call, Response response) throws IOException {
-//
-//            }
-//
-//        });
-
-
     }
 
     public Bitmap resizeMapIcons(String iconName, int width, int height){
