@@ -37,7 +37,6 @@ import okhttp3.Response;
 
 public class RetrivePokemon extends Thread {
 
-    private String urlGetPostPokemon = "http://192.168.0.188:7777/pokemon";
     private GoogleMap mMap;
     private ArrayList<PostPokemon> postPokemonArrayList;
     private Context context;
@@ -60,7 +59,7 @@ public class RetrivePokemon extends Thread {
     public void getPostPokemon() {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url(urlGetPostPokemon)
+                .url(PokemonWebService.getPokemonFromServer())
                 .build();
         Response responses = null;
 
@@ -115,7 +114,7 @@ public class RetrivePokemon extends Thread {
         while (true) {
             getPostPokemon();
             try {
-                Thread.sleep(5000);
+                Thread.sleep(10000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

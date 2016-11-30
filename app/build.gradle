@@ -36,6 +36,6 @@ dependencies {
     compile 'com.github.david402:playservice-plugin:0.0.7'
     compile 'com.android.support:design:23.4.0'
     testCompile 'junit:junit:4.12'
-    compile 'com.android.support:design:25.0.0'
-    compile 'com.android.support:design:25.0.0'
+    compile 'io.socket:socket.io-client:0.8.2'
+    compile 'org.kie.modules:com-google-code-gson:6.5.0.Final'
 }

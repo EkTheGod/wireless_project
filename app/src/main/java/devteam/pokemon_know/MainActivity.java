@@ -17,9 +17,6 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Handler;
 import android.content.res.Resources;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -54,19 +51,21 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Random;
 
 
 import devteam.pokemon_know.Model.DBHelper;
 import devteam.pokemon_know.Model.PostPokemon;
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.FormBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
+import devteam.pokemon_know.PokemonServer.PokemonWebService;
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 import devteam.pokemon_know.PokemonServer.RetrivePokemon;
 
 
@@ -81,18 +80,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LinearLayout linear;
     private RetrivePokemon retrivePokemon;
     private ArrayList<Marker> markerArrayList;
-    private ArrayList<PostPokemon> postPokemonArrayList;
+    private ArrayList<PostPokemon> pokemonArrayList;
     private GoogleApiClient mGoogleApiClient;
     private Location location;
 
     private Button filterButton;
     private AutoCompleteTextView autoCompleteTextView;
 
-    //private FloatingActionButton fab;
 
     private DBHelper db;
     private ImageView image;
 
+    private Socket mSocket;
+    {
+        try {
+            mSocket = IO.socket(PokemonWebService.getServer());
+        } catch (URISyntaxException e) {}
+    }
 
 
 
@@ -100,16 +104,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        // Create a GoogleApiClient instance
-
         init();
-//        reqPermission();
         autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.search);
         filterButton = (Button) findViewById(R.id.button);
         filterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                retrivePokemon.filterPokemon(autoCompleteTextView.getText().toString());
+//                retrivePokemon.filterPokemon(autoCompleteTextView.getText().toString());
             }
         });
         gen = new Random();
@@ -133,7 +134,29 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         markerArrayList = new ArrayList<Marker>();
+        mSocket.on("getPokemon", onGetPokemon);
+        mSocket.connect();
     }
+
+    private Emitter.Listener onGetPokemon = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+//                    PokemonWebService.addPokemonToArray(args[0]);
+//                    JSONObject data = (JSONObject) args[0];
+//                    Log.d("Get Pokemon",data.toString());
+                    JSONObject data = (JSONObject) args[0];
+                    try {
+                        Log.d("Get Pokemon",data.getString("pokemonName"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    };
 
     @Override
     public void onBackPressed() {
@@ -156,12 +179,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
         mMap.clear();
-        retrivePokemon = new RetrivePokemon(getApplicationContext(), mMap, markerArrayList,postPokemonArrayList);
-        retrivePokemon.start();
-//        lManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-//        LatLng sydney = new LatLng(getLastBestLocation().getLatitude(), getLastBestLocation().getLongitude());
-//        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
+//        retrivePokemon = new RetrivePokemon(getApplicationContext(), mMap, markerArrayList,postPokemonArrayList);
+//        retrivePokemon.start();
         mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
             @Override
             public void onCameraMoveStarted(int i) {
@@ -172,17 +191,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
             @Override
             public void onCameraIdle() {
-                // Cleaning all the markers.
-//                if (mMap != null) {
-//                    mMap.clear();
-//                }
-//                markerArrayList.get(1).set
                 for(int i=0;i<markerArrayList.size();i++){
                     String id = markerArrayList.get(i).getTag()+"";
                     markerArrayList.get(i).setIcon(BitmapDescriptorFactory.fromBitmap(resizeMapIcons("pokemon"+id,2,2)));
                 }
-//                mPosition = mMap.getCameraPosition().target;
-//                mZoom = mMap.getCameraPosition().zoom;
 
             }
         });
@@ -223,7 +235,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 button1.setOnClickListener(new android.view.View.OnClickListener() {
                     public void onClick(View v) {
                         sentRequest(search_dialog.getText().toString(), lat, longi);
-                        retrivePokemon.getPostPokemon();
+//                        retrivePokemon.getPostPokemon();
                         dialog.cancel();
                     }
                 });
@@ -243,38 +255,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     private void sentRequest(String pokemonName, String lat, String longi){
-        final String uri = "http://192.168.0.188:7777/addpokemon";
-        final OkHttpClient client = new OkHttpClient();
-
-        RequestBody formBody = new FormBody.Builder()
-                .add("postId", gen.nextInt(100000)+"")
-                .add("pokemonName", pokemonName)
-                .add("lat", lat)
-                .add("long", longi)
-                .add("user", "noneiei")
-                .build();
-        Request request = new Request.Builder()
-                .url(uri)
-                .post(formBody)
-                .build();
-
+        JSONObject addPokemon = new JSONObject();
         try {
-            client.newCall(request).enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.e("Test", e.toString());
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    String jsonData = response.body().string();
-
-                }
-
-            });
-        }catch (Exception e) {
+            addPokemon.put("postId",gen.nextInt(100000)+"");
+            addPokemon.put("user","noneiei");
+            addPokemon.put("pokemonName",pokemonName);
+            addPokemon.put("lat",lat);
+            addPokemon.put("long",longi);
+            mSocket.emit("addPokemon",addPokemon);
+        } catch (JSONException e) {
             e.printStackTrace();
         }
+
     }
 
     public Bitmap resizeMapIcons(String iconName, int width, int height){
@@ -292,7 +284,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle item selection
         switch (item.getItemId()) {
             case R.id.logout_button:
                 LoginManager.getInstance().logOut();
