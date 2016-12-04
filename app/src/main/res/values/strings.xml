@@ -11,4 +11,9 @@
 
     <string name="serverIP">192.168.0.101</string>
     <string name="serverPort">7777</string>
+
+    <string name="drawerHome">Home</string>
+    <string name="drawerFavorite">Favorite</string>
+    <string name="drawerHistory">History</string>
+    <string name="drawerLogout">Logout</string>
 </resources>

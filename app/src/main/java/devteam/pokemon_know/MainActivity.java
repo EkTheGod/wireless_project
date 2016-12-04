@@ -11,12 +11,15 @@ import android.content.res.AssetFileDescriptor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Handler;
 import android.content.res.Resources;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -31,6 +34,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 
+import com.facebook.AccessToken;
+import com.facebook.Profile;
+import com.facebook.ProfileTracker;
 import com.facebook.login.LoginManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -47,6 +53,15 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.mikepenz.materialdrawer.AccountHeader;
+import com.mikepenz.materialdrawer.AccountHeaderBuilder;
+import com.mikepenz.materialdrawer.DrawerBuilder;
+import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
+import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
+import com.mikepenz.materialdrawer.model.interfaces.IProfile;
+import com.mikepenz.materialdrawer.util.AbstractDrawerImageLoader;
+import com.mikepenz.materialdrawer.util.DrawerImageLoader;
+import com.squareup.picasso.Picasso;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -70,7 +85,7 @@ import devteam.pokemon_know.PokemonServer.RetrivePokemon;
 
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends DrawerActivity implements OnMapReadyCallback {
     private Random gen;
     private GoogleMap mMap;
     private Handler mHandler;
@@ -103,6 +118,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initDrawer();
         init();
         autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.search);
         filterButton = (Button) findViewById(R.id.button);
@@ -116,7 +132,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
 
-
     private ArrayAdapter<String> getAutoComplete() {
         return new ArrayAdapter<String>(this,
                 android.R.layout.simple_dropdown_item_1line, db.getPokemonList());
@@ -125,8 +140,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void init() {
         db = new DBHelper(this);
 
-        linear = (LinearLayout) findViewById(R.id.activity_main);
-        linear.setBackgroundColor(Color.rgb(202, 101, 34));
+//        linear = (LinearLayout) findViewById(R.id.activity_main);
+//        linear.setBackgroundColor(Color.rgb(202, 101, 34));
 
         search = (AutoCompleteTextView) findViewById(R.id.search);
         search.setAdapter(getAutoComplete());
@@ -309,26 +324,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(iconName, "drawable", getPackageName()));
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth()/width, imageBitmap.getHeight()/height, false);
         return resizedBitmap;
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.logout_button:
-                LoginManager.getInstance().logOut();
-                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-                startActivity(intent);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
     }
 
 }//end Activity
