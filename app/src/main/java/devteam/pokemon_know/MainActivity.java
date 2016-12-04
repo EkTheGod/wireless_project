@@ -250,6 +250,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                 search_dialog = (AutoCompleteTextView) dialog.findViewById(R.id.search_dialog);
                 search_dialog.setAdapter(getAutoComplete());
+                image = (ImageView) dialog.findViewById(R.id.imageDialog);
 
                 search_dialog.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
@@ -259,11 +260,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                         Resources resources = getApplicationContext().getResources();
                         int resourceId = resources.getIdentifier(db.getPokemonID(search_dialog.getText().toString()), "drawable",
                                 getApplicationContext().getPackageName());
-
-                        if(image == null)
-                            image = (ImageView) dialog.findViewById(R.id.imageDialog);
-                        else
-                            image.setImageResource(resourceId);
+                        image.setImageResource(resourceId);
                     }
                 });
 

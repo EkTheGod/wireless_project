@@ -2,13 +2,21 @@ package devteam.pokemon_know.Model;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 import android.util.Log;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+
+import devteam.pokemon_know.R;
 
 
 /**
@@ -20,6 +28,7 @@ public class DBHelper extends SQLiteOpenHelper {
     private static final String DBName = "pokemonKnow.db";
 
     private SQLiteDatabase sqLiteDatabase;
+    private Context context;
 
     @Override
     public void onCreate(SQLiteDatabase db) {
@@ -83,6 +92,49 @@ public class DBHelper extends SQLiteOpenHelper {
 
     public DBHelper(Context context){
         super(context,DBName,null,1);
+        this.context = context;
+    }
+
+    public void loadPokemonResource() throws IOException {
+        sqLiteDatabase = this.getWritableDatabase();
+        final Resources resources = context.getResources();
+        InputStream inputStream = resources.openRawResource(R.raw.pokemon_list);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        String[] strings = new String[2];
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                strings = TextUtils.split(line, "-");
+                if (strings.length < 2) continue;
+                Log.d("Loading", strings[0].trim() + " : " + strings[1].trim());
+                long add = addPokemon2(new Pokemon(
+                        strings[0].trim(), //ID
+                        strings[1].trim(),  //Name
+                        1, //Gen
+                        "pokemon"+strings[1].trim() //Image Path
+                ));
+                if(add < 0)
+                    Log.e("Error", "Unable to add pokemon " + strings[1].trim());
+            }
+        } catch (Exception e){
+            Log.e("Error", "error while add pokemon");
+            e.printStackTrace();
+        } finally {
+            sqLiteDatabase.close();
+            reader.close();
+        }
+        Log.d("Finish", "DONE loading resource.");
+    }
+
+    public long addPokemon2(Pokemon pokemon) {
+        ContentValues values = new ContentValues();
+
+        values.put(Pokemon.Column.id, pokemon.getId());
+        values.put(Pokemon.Column.name, pokemon.getName());
+        values.put(Pokemon.Column.gen, pokemon.getGeneration());
+        values.put(Pokemon.Column.imgPath, pokemon.getImgPath());
+
+        return sqLiteDatabase.insert(Pokemon.TABLE, null, values);
     }
 
     public void addPokemon(Pokemon pokemon){

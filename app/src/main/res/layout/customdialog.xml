@@ -17,7 +17,7 @@
         android:layout_height="130dp"
         android:id="@+id/imageDialog"
         android:layout_marginTop="50dp"
-        android:src="@drawable/pokemon133"
+        android:src="@drawable/pokeball"
         android:paddingLeft="-30dp"
         android:layout_gravity="center"/>
 
@@ -30,7 +30,7 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="43dp"
         android:id="@+id/search_dialog"
-        android:text="Eevee"
+        android:hint="Enter pokemon name"
         android:layout_gravity="center"/>
 
 

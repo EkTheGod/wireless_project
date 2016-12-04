@@ -61,7 +61,8 @@ public class splash_screen extends Activity {
     private void initDatabase(){
 //        sp = getSharedPreferences("PREF_Check_First_Load", Context.MODE_PRIVATE);
 //        if(sp.getBoolean("LOADED", false))
-            getPokemonData();
+//        getPokemonData();
+        loadPokemonData();
         myHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -74,6 +75,15 @@ public class splash_screen extends Activity {
                 startActivity(intent);
             }
         }, 3000);
+    }
+
+    private void loadPokemonData() {
+        try {
+            mHelper.loadPokemonResource();
+        }catch (IOException e){
+            Log.e("Error in splash screen", "below");
+            e.printStackTrace();
+        }
     }
 
     private void getPokemonData() {
