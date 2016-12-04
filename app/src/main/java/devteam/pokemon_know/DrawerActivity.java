@@ -3,6 +3,7 @@ package devteam.pokemon_know;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.support.v4.view.GravityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -27,6 +28,8 @@ import com.mikepenz.materialdrawer.util.DrawerImageLoader;
 import com.squareup.picasso.Picasso;
 
 public class DrawerActivity extends AppCompatActivity {
+    private Intent intent;
+    private Drawer draw;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +81,7 @@ public class DrawerActivity extends AppCompatActivity {
                 })
                 .build();
 
-        new DrawerBuilder()
+        draw = new DrawerBuilder()
                 .withActivity(this)
 //                .withRootView(R.id.frame_container)
                 .withToolbar(toolbar)
@@ -93,12 +96,14 @@ public class DrawerActivity extends AppCompatActivity {
                             case 1: // Home
                                 break;
                             case 2: // Favorite
+                                intent = new Intent(getApplicationContext(), Favorite.class);
+                                startActivity(intent);
                                 break;
                             case 3: //History
                                 break;
                             case 5: //Logout
                                 LoginManager.getInstance().logOut();
-                                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                                intent = new Intent(getApplicationContext(), LoginActivity.class);
                                 startActivity(intent);
                                 break;
                             default:
@@ -108,4 +113,13 @@ public class DrawerActivity extends AppCompatActivity {
                 })
                 .build();
     }//end InitDrawer
+
+    @Override
+    public void onBackPressed() {
+        if (this.draw.isDrawerOpen()) {
+            this.draw.closeDrawer();
+        } else {
+            super.onBackPressed();
+        }
+    }
 }

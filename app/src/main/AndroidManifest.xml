@@ -45,6 +45,7 @@
             android:theme="@android:style/Theme.Translucent.NoTitleBar"
             tools:replace="android:theme" />
         <activity android:name=".DrawerActivity"></activity>
+        <activity android:name=".Favorite"></activity>
     </application>
 
 </manifest>
