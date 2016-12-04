@@ -38,4 +38,8 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'io.socket:socket.io-client:0.8.2'
     compile 'org.kie.modules:com-google-code-gson:6.5.0.Final'
+    compile('com.mikepenz:materialdrawer:5.8.0@aar') {
+        transitive = true
+    }
+    compile 'com.squareup.picasso:picasso:2.3.2'
 }
