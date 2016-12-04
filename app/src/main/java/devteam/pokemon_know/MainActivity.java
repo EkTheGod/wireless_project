@@ -15,6 +15,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.content.res.Resources;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
@@ -32,11 +33,16 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -63,8 +69,8 @@ import devteam.pokemon_know.PokemonServer.RetrivePokemon;
 
 import okhttp3.Response;
 
-public class MainActivity extends DrawerActivity implements OnMapReadyCallback,GoogleMap.OnMyLocationButtonClickListener,
-        ActivityCompat.OnRequestPermissionsResultCallback  {
+public class MainActivity extends DrawerActivity implements OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
+        ActivityCompat.OnRequestPermissionsResultCallback,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private Random gen;
     private GoogleMap mMap;
     private boolean mPermissionDenied = false;
@@ -74,9 +80,9 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
     private LinearLayout linear;
     private RetrivePokemon retrivePokemon;
     private ArrayList<Marker> markerArrayList;
-    private HashMap<String,PostPokemon> pokemonHashMap;
+    private HashMap<String, PostPokemon> pokemonHashMap;
     private GoogleApiClient mGoogleApiClient;
-    private Location location;
+    private Location mLastLocation;
 
     private Button filterButton;
     private AutoCompleteTextView autoCompleteTextView;
@@ -84,12 +90,15 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
 
     private DBHelper db;
     private ImageView image;
-
+    private LatLng latLng;
+    private Marker currLocationMarker;
     private Socket mSocket;
+
     {
         try {
             mSocket = IO.socket(PokemonWebService.getServer());
-        } catch (URISyntaxException e) {}
+        } catch (URISyntaxException e) {
+        }
     }
 
 
@@ -113,6 +122,16 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
     }
 
     @Override
+    protected void onStop() {
+        super.onStop();
+        if (mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.disconnect();
+        }
+    }
+
+
+
+    @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
         if (requestCode != LOCATION_PERMISSION_REQUEST_CODE) {
@@ -121,10 +140,8 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
 
         if (PermissionUtils.isPermissionGranted(permissions, grantResults,
                 Manifest.permission.ACCESS_FINE_LOCATION)) {
-            // Enable the my location layer if the permission has been granted.
             enableMyLocation();
         } else {
-            // Display the missing permission error dialog when the fragments resume.
             mPermissionDenied = true;
         }
     }
@@ -138,6 +155,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         } else if (mMap != null) {
             // Access to the location has been granted to the app.
             mMap.setMyLocationEnabled(true);
+
         }
     }
 
@@ -149,10 +167,6 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
 
     private void init() {
         db = new DBHelper(this);
-
-//        linear = (LinearLayout) findViewById(R.id.activity_main);
-//        linear.setBackgroundColor(Color.rgb(202, 101, 34));
-
         search = (AutoCompleteTextView) findViewById(R.id.search);
         search.setAdapter(getAutoComplete());
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -169,8 +183,8 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         public void call(final Object... args) {
             final JSONObject object = (JSONObject) args[0];
             try {
-                Log.d("Get Pokemon",object.getString("pokemonName"));
-                if(pokemonHashMap.containsKey(object.getString("_id").toString()))
+                Log.d("Get Pokemon", object.getString("pokemonName"));
+                if (pokemonHashMap.containsKey(object.getString("_id").toString()))
                     return;
                 PostPokemon postPokemon = new PostPokemon(
                         object.getString("postId").toString(),
@@ -181,14 +195,14 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
                         object.getString("endTime").toString(),
                         object.getString("user").toString()
                 );
-                pokemonHashMap.put(object.getString("_id").toString(),postPokemon);
+                pokemonHashMap.put(object.getString("_id").toString(), postPokemon);
                 final Pokemon pokemon = db.getPokemonByName(object.getString("pokemonName").toString());
-                if( pokemon != null ){
+                if (pokemon != null) {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             try {
-                                createMarker(pokemon.getId(),pokemon.getName(),object.getDouble("lat"),object.getDouble("long"));
+                                createMarker(pokemon.getId(), pokemon.getName(), object.getDouble("lat"), object.getDouble("long"));
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -202,9 +216,9 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         }
     };
 
-    private void createMarker(String pokemonId,String pokemonName,Double Lat,Double Long){
+    private void createMarker(String pokemonId, String pokemonName, Double Lat, Double Long) {
         Resources resources = getResources();
-        final int resourceId = resources.getIdentifier("pokemon"+pokemonId, "drawable",getPackageName());
+        final int resourceId = resources.getIdentifier("pokemon" + pokemonId, "drawable", getPackageName());
         LatLng latLng = new LatLng(Lat, Long);
         Marker pokeMark = mMap.addMarker(new MarkerOptions()
                 .position(latLng)
@@ -241,9 +255,8 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         mMap = googleMap;
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
-//        mMap.clear();
-//        retrivePokemon = new RetrivePokemon(getApplicationContext(), mMap, markerArrayList,postPokemonArrayList);
-//        retrivePokemon.start();
+        buildGoogleApiClient();
+        mGoogleApiClient.connect();
         mMap.setOnCameraMoveStartedListener(new GoogleMap.OnCameraMoveStartedListener() {
             @Override
             public void onCameraMoveStarted(int i) {
@@ -254,9 +267,9 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         mMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
             @Override
             public void onCameraIdle() {
-                for(int i=0;i<markerArrayList.size();i++){
-                    String id = markerArrayList.get(i).getTag()+"";
-                    markerArrayList.get(i).setIcon(BitmapDescriptorFactory.fromBitmap(resizeMapIcons("pokemon"+id,2,2)));
+                for (int i = 0; i < markerArrayList.size(); i++) {
+                    String id = markerArrayList.get(i).getTag() + "";
+                    markerArrayList.get(i).setIcon(BitmapDescriptorFactory.fromBitmap(resizeMapIcons("pokemon" + id, 2, 2)));
                 }
 
             }
@@ -265,7 +278,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                Log.d("Camera",latLng.latitude+":"+latLng.longitude);
+                Log.d("Camera", latLng.latitude + ":" + latLng.longitude);
                 final String lat = String.valueOf(latLng.latitude);
                 final String longi = String.valueOf(latLng.longitude);
 
@@ -282,7 +295,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
                 search_dialog.setOnItemClickListener(new AdapterView.OnItemClickListener() {
 
                     @Override
-                    public void onItemClick (AdapterView<?> parent, View view, int position, long id) {
+                    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Log.d("select", search_dialog.getText().toString());
                         Resources resources = getApplicationContext().getResources();
                         int resourceId = resources.getIdentifier(db.getPokemonID(search_dialog.getText().toString()), "drawable",
@@ -291,7 +304,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
                     }
                 });
 
-                Button button1 = (Button)dialog.findViewById(R.id.sentbutton);
+                Button button1 = (Button) dialog.findViewById(R.id.sentbutton);
                 button1.setOnClickListener(new android.view.View.OnClickListener() {
                     public void onClick(View v) {
                         sentRequest(search_dialog.getText().toString(), lat, longi);
@@ -300,7 +313,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
                     }
                 });
 
-                Button button2 = (Button)dialog.findViewById(R.id.cancelbutton);
+                Button button2 = (Button) dialog.findViewById(R.id.cancelbutton);
                 button2.setOnClickListener(new android.view.View.OnClickListener() {
                     public void onClick(View v) {
                         dialog.cancel();
@@ -323,24 +336,24 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         return false;
     }
 
-    private void sentRequest(String pokemonName, String lat, String longi){
+    private void sentRequest(String pokemonName, String lat, String longi) {
         JSONObject addPokemon = new JSONObject();
         try {
-            addPokemon.put("postId",gen.nextInt(100000)+"");
-            addPokemon.put("user","noneiei");
-            addPokemon.put("pokemonName",pokemonName);
-            addPokemon.put("lat",lat);
-            addPokemon.put("long",longi);
-            mSocket.emit("addPokemon",addPokemon);
+            addPokemon.put("postId", gen.nextInt(100000) + "");
+            addPokemon.put("user", "noneiei");
+            addPokemon.put("pokemonName", pokemonName);
+            addPokemon.put("lat", lat);
+            addPokemon.put("long", longi);
+            mSocket.emit("addPokemon", addPokemon);
         } catch (JSONException e) {
             e.printStackTrace();
         }
 
     }
 
-    public Bitmap resizeMapIcons(String iconName, int width, int height){
-        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(iconName, "drawable", getPackageName()));
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth()/width, imageBitmap.getHeight()/height, false);
+    public Bitmap resizeMapIcons(String iconName, int width, int height) {
+        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(), getResources().getIdentifier(iconName, "drawable", getPackageName()));
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, imageBitmap.getWidth() / width, imageBitmap.getHeight() / height, false);
         return resizedBitmap;
     }
 
@@ -350,4 +363,69 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback,G
         mSocket.disconnect();
     }
 
+    protected synchronized void buildGoogleApiClient() {
+        Toast.makeText(this,"buildGoogleApiClient",Toast.LENGTH_SHORT).show();
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .addApi(LocationServices.API)
+                .build();
+    }
+
+    @Override
+    public void onConnected(Bundle bundle) {
+        double lat;
+        double lng;
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
+                mGoogleApiClient);
+        if (mLastLocation != null) {
+            lat = mLastLocation.getLatitude();
+            lng = mLastLocation.getLongitude();
+
+            LatLng loc = new LatLng(lat, lng);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc,16));
+        }
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+        Toast.makeText(this,"onConnectionSuspended",Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Toast.makeText(this,"onConnectionFailed",Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+
+//        //place marker at current position
+//        //mGoogleMap.clear();
+//        if (currLocationMarker != null) {
+//            currLocationMarker.remove();
+//        }
+//        latLng = new LatLng(location.getLatitude(), location.getLongitude());
+//        MarkerOptions markerOptions = new MarkerOptions();
+//        markerOptions.position(latLng);
+//        markerOptions.title("Current Position");
+//        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+//        currLocationMarker = mMap.addMarker(markerOptions);
+//
+//        Toast.makeText(this,"Location Changed",Toast.LENGTH_SHORT).show();
+//
+//        //zoom to current position:
+//        CameraPosition cameraPosition = new CameraPosition.Builder()
+//                .target(latLng).zoom(14).build();
+//
+//        mMap.animateCamera(CameraUpdateFactory
+//                .newCameraPosition(cameraPosition));
+//
+//        //If you only need one location, unregister the listener
+//        //LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+
+    }
 }//end Activity
