@@ -17,7 +17,7 @@ import devteam.pokemon_know.Model.PostPokemon;
  */
 
 public class PokemonWebService {
-    private static String server = "http://192.168.0.100:7777/";
+    private static String server = "http://192.168.0.24:7777/";
     private static HashMap<String,Boolean> pokemonCheck;
     private static ArrayList<PostPokemon> pokemonArrayList = new ArrayList<PostPokemon>();
 

@@ -12,9 +12,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.Handler;
 import android.content.res.Resources;
 import android.support.v7.app.AlertDialog;
@@ -32,7 +29,6 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 
 import com.facebook.login.LoginManager;
@@ -50,6 +46,7 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -57,10 +54,12 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Random;
 
 
 import devteam.pokemon_know.Model.DBHelper;
+import devteam.pokemon_know.Model.Pokemon;
 import devteam.pokemon_know.Model.PostPokemon;
 import devteam.pokemon_know.PokemonServer.PokemonWebService;
 import io.socket.client.IO;
@@ -80,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private LinearLayout linear;
     private RetrivePokemon retrivePokemon;
     private ArrayList<Marker> markerArrayList;
-    private ArrayList<PostPokemon> pokemonArrayList;
+    private HashMap<String,PostPokemon> pokemonHashMap;
     private GoogleApiClient mGoogleApiClient;
     private Location location;
 
@@ -125,6 +124,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private void init() {
         db = new DBHelper(this);
+
         linear = (LinearLayout) findViewById(R.id.activity_main);
         linear.setBackgroundColor(Color.rgb(202, 101, 34));
 
@@ -136,27 +136,63 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerArrayList = new ArrayList<Marker>();
         mSocket.on("getPokemon", onGetPokemon);
         mSocket.connect();
+        pokemonHashMap = new HashMap<String, PostPokemon>();
     }
 
     private Emitter.Listener onGetPokemon = new Emitter.Listener() {
         @Override
         public void call(final Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-//                    PokemonWebService.addPokemonToArray(args[0]);
-//                    JSONObject data = (JSONObject) args[0];
-//                    Log.d("Get Pokemon",data.toString());
-                    JSONObject data = (JSONObject) args[0];
-                    try {
-                        Log.d("Get Pokemon",data.getString("pokemonName"));
-                    } catch (JSONException e) {
-                        e.printStackTrace();
-                    }
+            final JSONObject object = (JSONObject) args[0];
+            try {
+                Log.d("Get Pokemon",object.getString("pokemonName"));
+                if(pokemonHashMap.containsKey(object.getString("_id").toString()))
+                    return;
+                PostPokemon postPokemon = new PostPokemon(
+                        object.getString("postId").toString(),
+                        object.getString("pokemonName").toString(),
+                        object.getString("lat").toString(),
+                        object.getString("long").toString(),
+                        object.getString("startTime").toString(),
+                        object.getString("endTime").toString(),
+                        object.getString("user").toString()
+                );
+                pokemonHashMap.put(object.getString("_id").toString(),postPokemon);
+                final Pokemon pokemon = db.getPokemonByName(object.getString("pokemonName").toString());
+                if( pokemon != null ){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                createMarker(pokemon.getId(),pokemon.getName(),object.getDouble("lat"),object.getDouble("long"));
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    });
                 }
-            });
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
         }
     };
+
+    private void createMarker(String pokemonId,String pokemonName,Double Lat,Double Long){
+        Resources resources = getResources();
+        final int resourceId = resources.getIdentifier("pokemon"+pokemonId, "drawable",getPackageName());
+        LatLng latLng = new LatLng(Lat, Long);
+        Marker pokeMark = mMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .title(pokemonName)
+//                        .snippet("I Love You.")
+                .icon(BitmapDescriptorFactory.fromResource(resourceId)));
+        pokeMark.setTag(pokemonId);
+//        if( filterPokemonName != null ){
+//            if( filterPokemonName.equals(pokemonName) )
+//                pokeMark.setVisible(true);
+//        }
+        markerArrayList.add(pokeMark);
+    }
 
     @Override
     public void onBackPressed() {
