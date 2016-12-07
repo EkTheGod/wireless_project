@@ -44,6 +44,7 @@
             tools:replace="android:theme" />
         <activity android:name=".DrawerActivity" />
         <activity android:name=".HistoryActivity"></activity>
+        <activity android:name=".Favorite"></activity>
     </application>
 
 </manifest>

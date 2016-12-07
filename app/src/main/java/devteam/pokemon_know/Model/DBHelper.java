@@ -41,8 +41,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 Pokemon.Column.imgPath);
         Log.i(TAG, CREATE_POKEMON_TABLE);
 
-
-
         String CREATE_POSTPOKEMON_TABLE = String.format("CREATE TABLE %s " +
                         "(%s VARCHAR(8) PRIMARY KEY , %s TEXT, %s TEXT, %s TEXT, %s TEXT, %s TEXT, %s TEXT)",
                 PostPokemon.TABLE,
@@ -65,10 +63,20 @@ public class DBHelper extends SQLiteOpenHelper {
                 );
         Log.i(TAG, CREATE_USER_TABLE);
 
+
+        String CREATE_USERFAVORITE_TABLE = String.format("CREATE TABLE %s " +
+                        "(%s VARCHAR(8) PRIMARY KEY , %s TEXT)",
+                UserFavorite.TABLE,
+                Pokemon.Column.id,
+                Pokemon.Column.name
+        );
+        Log.i(TAG, CREATE_USERFAVORITE_TABLE);
+
         // create friend table
         db.execSQL(CREATE_POKEMON_TABLE);
         db.execSQL(CREATE_POSTPOKEMON_TABLE);
         db.execSQL(CREATE_USER_TABLE);
+        db.execSQL(CREATE_USERFAVORITE_TABLE);
     }
 
     @Override
@@ -113,6 +121,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         1, //Gen
                         "pokemon"+strings[1].trim() //Image Path
                 ));
+
                 if(add < 0)
                     Log.e("Error", "Unable to add pokemon " + strings[1].trim());
             }
@@ -120,11 +129,21 @@ public class DBHelper extends SQLiteOpenHelper {
             Log.e("Error", "error while add pokemon");
             e.printStackTrace();
         } finally {
+
+            addToFav(new Pokemon(
+                    "5", //ID
+                    "Charmeleon",  //Name
+                    1, //Gen
+                    "pokemon5" //Image Path
+            ));
+
             sqLiteDatabase.close();
             reader.close();
         }
         Log.d("Finish", "DONE loading resource.");
     }
+
+
 
     public long addPokemon2(Pokemon pokemon) {
         ContentValues values = new ContentValues();
@@ -135,6 +154,12 @@ public class DBHelper extends SQLiteOpenHelper {
         values.put(Pokemon.Column.imgPath, pokemon.getImgPath());
 
         return sqLiteDatabase.insert(Pokemon.TABLE, null, values);
+    }
+
+    public void addToFav(Pokemon pokemon){
+        ContentValues values = new ContentValues();
+        values.put(Pokemon.Column.name, pokemon.getName());
+        sqLiteDatabase.insert(UserFavorite.TABLE, null, values);
     }
 
     public void addPokemon(Pokemon pokemon){
@@ -210,6 +235,30 @@ public class DBHelper extends SQLiteOpenHelper {
         );
 
         return pokemon;
+    }
+
+    public List<String> getFavoriteList(){
+        sqLiteDatabase = this.getWritableDatabase();
+
+        List<String> list = new ArrayList<>();
+        String[] columnArgs = new String[]{
+                Pokemon.Column.name
+        };
+
+        Cursor cursor = sqLiteDatabase.query(UserFavorite.TABLE, columnArgs, null, null, null, null, null); //(table, column, where, where arg, groupby, having, orderby)
+
+        Log.d("Size of Favorite", String.valueOf(cursor.getCount()));
+        if (cursor != null) {
+            cursor.moveToFirst();
+        }
+
+        while(!cursor.isAfterLast()) {
+            //Log.d("Auto complete load", cursor.getString(0));
+            list.add(cursor.getString(0));
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return list;
     }
 
     public List<String> getPokemonList(){
