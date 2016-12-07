@@ -33,6 +33,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 
+import com.facebook.Profile;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -340,7 +341,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         JSONObject addPokemon = new JSONObject();
         try {
             addPokemon.put("postId", gen.nextInt(100000) + "");
-            addPokemon.put("user", "noneiei");
+            addPokemon.put("user", Profile.getCurrentProfile().getId());
             addPokemon.put("pokemonName", pokemonName);
             addPokemon.put("lat", lat);
             addPokemon.put("long", longi);
@@ -428,4 +429,6 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
 //        //LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
 
     }
+
+
 }//end Activity

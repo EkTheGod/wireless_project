@@ -95,6 +95,8 @@ public class DrawerActivity extends AppCompatActivity {
                             case 2: // Favorite
                                 break;
                             case 3: //History
+                                Intent history = new Intent(getApplicationContext(),HistoryActivity.class);
+                                startActivity(history);
                                 break;
                             case 5: //Logout
                                 LoginManager.getInstance().logOut();
