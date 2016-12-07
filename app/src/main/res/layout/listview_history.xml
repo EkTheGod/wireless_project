@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <ImageView
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:src="@drawable/pokemon1"
+        android:layout_gravity="center"
+        android:id="@+id/lvHistoryPokemon"/>
+
+
+    <GridLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:columnCount="2"
+        android:layout_gravity="center"
+        >
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pokemon Name : "
+            android:textColor="@color/material_drawer_primary_text"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Picachu"
+            android:id="@+id/lvHistoryPokemonName"
+            android:textColor="@color/material_drawer_secondary_text"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Post Date : "
+            android:textColor="@color/material_drawer_primary_text"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="DD/MM/YYYY mm:hh"
+            android:id="@+id/lvHistoryDate"
+            android:textColor="@color/material_drawer_secondary_text"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Post Status : "
+            android:textColor="@color/material_drawer_primary_text"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Expired"
+            android:id="@+id/lvHistoryStatus"
+            android:textColor="@color/material_drawer_secondary_text"
+            />
+    </GridLayout>
+</LinearLayout>
