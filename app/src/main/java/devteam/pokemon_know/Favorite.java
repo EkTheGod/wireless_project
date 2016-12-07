@@ -5,16 +5,22 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import devteam.pokemon_know.Model.DBHelper;
+import java.util.Map;
 
 /**
  * Created by ekach on 4/12/2559.
@@ -24,8 +30,9 @@ public class Favorite extends AppCompatActivity {
 
     private Toolbar toolbar;
     private ListView fav;
-    int[] resId = { R.drawable.pokemon5 };
-    String[] list;
+    private Resources resources;
+    int[] favResId;// = { R.drawable.pokemon5 };
+    String[] favList;
 
 
     @Override
@@ -33,42 +40,74 @@ public class Favorite extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_favorite);
         init();
-        initList();
     }
 
-    private void init() {
+    private void init(){
         toolbar = (Toolbar) findViewById(R.id.toolbarInFavorite);
         toolbar.setBackgroundColor(Color.rgb(1,117,164));
 
         fav = (ListView) findViewById(R.id.favlist);
+
+        try {
+            initList();
+        }
+        catch (IOException e){
+
+        }
     }
 
-    private void initList() {
-        final DBHelper db = new DBHelper(this);
-        final List<String> ls = db.getFavoriteList();
+    private List<Map.Entry<String,String>> loadFavList() throws IOException{
+        resources = getApplicationContext().getResources();
+        InputStream inputStream = resources.openRawResource(R.raw.favorite);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-        Log.d("Size of favorite", String.valueOf(ls.size()));
-        list = new String[ls.size()];
-//        resId = new int[ls.size()];
-        list = ls.toArray(list);
+        List<Map.Entry<String,String>> list = new ArrayList<>();
 
-        Resources resources = getApplicationContext().getResources();
-        Log.d("Show ID", db.getPokemonID(list[0]));
+        try {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] strings = TextUtils.split(line, "-");
+                if (strings.length < 2) continue;
+                Log.d("Loading", strings[0].trim() + " : " + strings[1].trim());
+                list.add(new AbstractMap.SimpleEntry<>(strings[0].trim(), strings[1].trim()));
+            }
+        } catch (Exception e){
+            Log.e("Error", "error while loading favorite pokemon");
+            e.printStackTrace();
+        } finally {
+            reader.close();
+        }
+        Log.d("Finish", "DONE loading favorite.");
+        return list;
+    }
 
-//        int resourceId = resources.getIdentifier(db.getPokemonID(list[0]), "drawable",
-//                getApplicationContext().getPackageName());
-//        //Log.d("Show ID", StrresourceId);
-//
-//        resId = addElement(resId, R.drawable.pokemon5);
+    private void initList() throws IOException{
+        final List<Map.Entry<String,String>> listResources;
+        listResources = loadFavList();
 
-        CustomAdapter adapter = new CustomAdapter(Favorite.this, list, resId);
+//        Log.d("Size of favorite", String.valueOf(listResources.size()));
+
+        favList = new String[listResources.size()];
+        favResId = new int[listResources.size()];
+        for(int i=0; i<listResources.size(); i++ ){
+            Map.Entry<String, String> temp = listResources.get(i);
+
+            int resourceId = resources.getIdentifier("pokemon"+temp.getKey(), "drawable",
+                    getApplicationContext().getPackageName());
+
+            favResId[i] = resourceId;
+            Log.d("res ID", String.valueOf(resourceId));
+            favList[i] = temp.getValue();
+        }
+
+        CustomAdapter adapter = new CustomAdapter(Favorite.this, favList, favResId);
 
         fav.setAdapter(adapter);
         fav.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view,
                                     int position, long id) {
-                Toast.makeText(Favorite.this, "You Clicked at " +list[+ position], Toast.LENGTH_SHORT).show();
+                Toast.makeText(Favorite.this, "You Clicked at " +favList[+ position], Toast.LENGTH_SHORT).show();
             }
         });
     }
