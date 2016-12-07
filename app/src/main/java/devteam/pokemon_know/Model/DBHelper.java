@@ -13,8 +13,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import devteam.pokemon_know.R;
 
@@ -130,12 +132,12 @@ public class DBHelper extends SQLiteOpenHelper {
             e.printStackTrace();
         } finally {
 
-            addToFav(new Pokemon(
-                    "5", //ID
-                    "Charmeleon",  //Name
-                    1, //Gen
-                    "pokemon5" //Image Path
-            ));
+//            addToFav(new Pokemon(
+//                    "5", //ID
+//                    "Charmeleon",  //Name
+//                    1, //Gen
+//                    "pokemon5" //Image Path
+//            ));
 
             sqLiteDatabase.close();
             reader.close();
@@ -156,10 +158,27 @@ public class DBHelper extends SQLiteOpenHelper {
         return sqLiteDatabase.insert(Pokemon.TABLE, null, values);
     }
 
-    public void addToFav(Pokemon pokemon){
+    public void addToFav(String id, String name){
+        sqLiteDatabase = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put(Pokemon.Column.name, pokemon.getName());
+
+        values.put(Pokemon.Column.id, id);
+        values.put(Pokemon.Column.name, name);
+
         sqLiteDatabase.insert(UserFavorite.TABLE, null, values);
+        sqLiteDatabase.close();
+        Log.d("DBHelper","Add Pokemon fav Name : "+name+" Complete!");
+    }
+
+    public void removeFromFav(String id, String name){
+        sqLiteDatabase = this.getWritableDatabase();
+
+        String whereClause = "id=?";
+        String[] whereArgs = new String[] { id };
+        sqLiteDatabase.delete(UserFavorite.TABLE, whereClause, whereArgs);
+
+        sqLiteDatabase.close();
+        Log.d("DBHelper","REMOVE Pokemon fav Name : "+name+" Complete!");
     }
 
     public void addPokemon(Pokemon pokemon){
@@ -237,11 +256,12 @@ public class DBHelper extends SQLiteOpenHelper {
         return pokemon;
     }
 
-    public List<String> getFavoriteList(){
+    public List<Map.Entry<String,String>> getFavoriteList(){
         sqLiteDatabase = this.getWritableDatabase();
 
-        List<String> list = new ArrayList<>();
+        List<Map.Entry<String,String>> list = new ArrayList<>();
         String[] columnArgs = new String[]{
+                Pokemon.Column.id,
                 Pokemon.Column.name
         };
 
@@ -254,7 +274,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         while(!cursor.isAfterLast()) {
             //Log.d("Auto complete load", cursor.getString(0));
-            list.add(cursor.getString(0));
+//            list.add(cursor.getString(0));
+            list.add(new AbstractMap.SimpleEntry<>(cursor.getString(0), cursor.getString(1)));
             cursor.moveToNext();
         }
         cursor.close();
