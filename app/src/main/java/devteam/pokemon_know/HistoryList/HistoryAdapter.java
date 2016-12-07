@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import devteam.pokemon_know.Model.DBHelper;
 import devteam.pokemon_know.R;
 
 /**
@@ -31,14 +32,14 @@ public class HistoryAdapter extends ArrayAdapter<Map<String, String>> {
     private int layoutResourceId;
     private List<Map<String, String>> data;
     private Context mContext;
-    private int[] imgList;
+    private DBHelper db;
 
     public HistoryAdapter(Context context, int resource, JSONArray objects) {
         super(context, resource, getListFromJsonArray(objects));
         layoutResourceId = resource;
         data = getListFromJsonArray(objects);
         mContext = context;
-//        initImageArray();
+        db = new DBHelper(context);
     }
 
     // method converts JSONArray to List of Maps
@@ -73,23 +74,24 @@ public class HistoryAdapter extends ArrayAdapter<Map<String, String>> {
     public View getView(int position, View row, ViewGroup parent) {
         if (row == null)
         {
-            LayoutInflater inflater = ((Activity)mContext).getLayoutInflater ();  // we get a reference to the activity
+            LayoutInflater inflater = LayoutInflater.from(mContext);  // we get a reference to the activity
             row = inflater.inflate (R.layout.listview_history, parent, false);
         }
-
         ImageView ivPokemon = (ImageView) row.findViewById(R.id.lvHistoryPokemon);
-//        ivPokemon.setImageResource(imgList[position]);
+        String pokemonResPath = db.getPokemonByName(data.get(position).get("pokemonName")).getImgPath();
+        int resId = mContext.getResources().getIdentifier(pokemonResPath,"drawable",mContext.getPackageName());
+        ivPokemon.setImageResource(resId);
 
         TextView tvHistoryPokemonName = (TextView) row.findViewById(R.id.lvHistoryPokemonName);
-//        tvHistoryPokemonName.setText(data.get(position).get("PokemonName"));
+        tvHistoryPokemonName.setText( data.get(position).get("pokemonName") );
 
         TextView tvHistoryDate = (TextView) row.findViewById(R.id.lvHistoryDate);
-        tvHistoryDate.setText("Test");
+        tvHistoryDate.setText( data.get(position).get("startTime") );
 
         TextView tvHistoryStatus = (TextView) row.findViewById(R.id.lvHistoryStatus);
-        tvHistoryStatus.setText("Test");
+        String active = ( data.get(position).get("active").equals("1") )? "Active": "Expired";
+        tvHistoryStatus.setText( active );
         return row;
-
     }
 
 
