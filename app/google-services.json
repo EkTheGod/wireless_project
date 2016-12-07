@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "68962772412",
+    "project_id": "pokemon-know-1478662990005"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:68962772412:android:3439bf817e60ed47",
+        "android_client_info": {
+          "package_name": "devteam.pokemon_know"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "68962772412-m4i82dpa8cdjba605k57qp2sv3vnf0ee.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "devteam.pokemon_know",
+            "certificate_hash": "6799AE81DBA49F4AB7571F2BB9C39B8642694D48"
+          }
+        },
+        {
+          "client_id": "68962772412-9g8gb1v8ecilnhts0dtmqqn12f9hqsd3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANZ8E-Y4lrTT0M3EUdLynCHZ6eqSitze8"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
