@@ -31,6 +31,8 @@ public class DrawerActivity extends AppCompatActivity {
     private Intent intent;
     private Drawer draw;
 
+    private String className;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -38,7 +40,7 @@ public class DrawerActivity extends AppCompatActivity {
     }
 
     protected void initDrawer(){
-        Log.d("Activity Name",this.getClass().getSimpleName());
+        className = this.getClass().getSimpleName().toString();
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
             public void set(ImageView imageView, Uri uri, Drawable placeholder) {
@@ -81,6 +83,7 @@ public class DrawerActivity extends AppCompatActivity {
                 })
                 .build();
 
+
         draw = new DrawerBuilder()
                 .withActivity(this)
 //                .withRootView(R.id.frame_container)
@@ -94,12 +97,22 @@ public class DrawerActivity extends AppCompatActivity {
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
                         switch (position){
                             case 1: // Home
+                                if( !className.equals("MainActivity") )
+                                    finish();
                                 break;
                             case 2: // Favorite
                                 intent = new Intent(getApplicationContext(), Favorite.class);
                                 startActivity(intent);
                                 break;
                             case 3: //History
+                                if( className.equals("MainActivity") ) {
+                                    Intent history = new Intent(getApplicationContext(), HistoryActivity.class);
+                                    startActivity(history);
+                                }else if( className.equals("Favorite") ){
+                                    finish();
+                                    Intent history = new Intent(getApplicationContext(), HistoryActivity.class);
+                                    startActivity(history);
+                                }
                                 break;
                             case 5: //Logout
                                 LoginManager.getInstance().logOut();
@@ -110,8 +123,10 @@ public class DrawerActivity extends AppCompatActivity {
                         }
                         return false;
                     }
+
                 })
                 .build();
+        draw.resetDrawerContent();
     }//end InitDrawer
 
     @Override
