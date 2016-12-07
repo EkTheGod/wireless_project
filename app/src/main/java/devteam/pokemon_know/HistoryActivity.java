@@ -71,7 +71,7 @@ public class HistoryActivity extends DrawerActivity {
     private void sendRequestHistory(String socialType,String userId) {
         JSONObject historyRequest = new JSONObject();
         try {
-            historyRequest.put("user", userId);
+            historyRequest.put("userId", userId);
             mSocket.emit("getHistory", historyRequest);
         } catch (JSONException e) {
             e.printStackTrace();

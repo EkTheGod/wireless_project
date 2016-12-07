@@ -48,6 +48,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -94,7 +95,6 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
     private LatLng latLng;
     private Marker currLocationMarker;
     private Socket mSocket;
-
     {
         try {
             mSocket = IO.socket(PokemonWebService.getServer());
@@ -175,7 +175,10 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         mapFragment.getMapAsync(this);
         markerArrayList = new ArrayList<Marker>();
         mSocket.on("getPokemon", onGetPokemon);
+        mSocket.on("getPokemonAll", onGetPokemonAll);
+        mSocket.on("showPokemonMarker", onShowPokemonMarker);
         mSocket.connect();
+        mSocket.emit("getPokemonAll");
         pokemonHashMap = new HashMap<String, PostPokemon>();
     }
 
@@ -194,7 +197,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
                         object.getString("long").toString(),
                         object.getString("startTime").toString(),
                         object.getString("endTime").toString(),
-                        object.getString("user").toString()
+                        object.getString("userId").toString()
                 );
                 pokemonHashMap.put(object.getString("_id").toString(), postPokemon);
                 final Pokemon pokemon = db.getPokemonByName(object.getString("pokemonName").toString());
@@ -203,7 +206,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
                         @Override
                         public void run() {
                             try {
-                                createMarker(pokemon.getId(), pokemon.getName(), object.getDouble("lat"), object.getDouble("long"));
+                                createMarker(object.getString("_id").toString(),pokemon.getId(), pokemon.getName(), object.getDouble("lat"), object.getDouble("long"));
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -217,14 +220,76 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         }
     };
 
-    private void createMarker(String pokemonId, String pokemonName, Double Lat, Double Long) {
+    private Emitter.Listener onGetPokemonAll = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            final JSONArray jsonArray = (JSONArray) args[0];
+            for(int i=0;i<jsonArray.length();i++){
+                final JSONObject object;
+                try {
+                    object = jsonArray.getJSONObject(i);
+                    Log.d("Get Pokemon", object.getString("pokemonName"));
+                    if (pokemonHashMap.containsKey(object.getString("_id").toString()))
+                        return;
+                    PostPokemon postPokemon = new PostPokemon(
+                            object.getString("postId").toString(),
+                            object.getString("pokemonName").toString(),
+                            object.getString("lat").toString(),
+                            object.getString("long").toString(),
+                            object.getString("startTime").toString(),
+                            object.getString("endTime").toString(),
+                            object.getString("userId").toString()
+                    );
+                    pokemonHashMap.put(object.getString("_id").toString(), postPokemon);
+                    final Pokemon pokemon = db.getPokemonByName(object.getString("pokemonName").toString());
+                    if (pokemon != null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    createMarker(object.getString("_id").toString(),pokemon.getId(), pokemon.getName(), object.getDouble("lat"), object.getDouble("long"));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+
+    private Emitter.Listener onShowPokemonMarker = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    final Dialog dialog = new Dialog(MainActivity.this);
+                    dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+                    dialog.setContentView(R.layout.);
+                    dialog.setCancelable(true);
+
+                    search_dialog = (AutoCompleteTextView) dialog.findViewById(R.id.search_dialog);
+                    search_dialog.setAdapter(getAutoComplete());
+                    image = (ImageView) dialog.findViewById(R.id.imageDialog);
+                }
+            });
+        }
+    };
+
+    private void createMarker(String postId,String pokemonId, String pokemonName, Double Lat, Double Long) {
         Resources resources = getResources();
         final int resourceId = resources.getIdentifier("pokemon" + pokemonId, "drawable", getPackageName());
         LatLng latLng = new LatLng(Lat, Long);
         Marker pokeMark = mMap.addMarker(new MarkerOptions()
                 .position(latLng)
                 .title(pokemonName)
-//                        .snippet("I Love You.")
+                .snippet(postId)
                 .icon(BitmapDescriptorFactory.fromResource(resourceId)));
         pokeMark.setTag(pokemonId);
 //        if( filterPokemonName != null ){
@@ -252,7 +317,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
     }
 
     @Override
-    public void onMapReady(GoogleMap googleMap) {
+    public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
@@ -326,7 +391,13 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
             }
         });
 
-
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                mSocket.emit("showPokemonMarker",marker.getSnippet());
+                return true;
+            }
+        });
     }
 
     @Override
@@ -341,7 +412,8 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         JSONObject addPokemon = new JSONObject();
         try {
             addPokemon.put("postId", gen.nextInt(100000) + "");
-            addPokemon.put("user", Profile.getCurrentProfile().getId());
+            addPokemon.put("userId", Profile.getCurrentProfile().getId());
+            addPokemon.put("userName", Profile.getCurrentProfile().getName());
             addPokemon.put("pokemonName", pokemonName);
             addPokemon.put("lat", lat);
             addPokemon.put("long", longi);
