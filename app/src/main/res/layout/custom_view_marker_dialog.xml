@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/Bg_add_seePoke">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="100dp"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="130dp"
+            android:layout_height="130dp"
+            android:id="@+id/imageDialog"
+            android:src="@drawable/pokemon133"
+            android:layout_gravity="center"
+            android:layout_above="@+id/search_dialog"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pikachu"
+            android:layout_gravity="center"
+            android:textSize="30sp"
+            android:id="@+id/tvPokemonName"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rachanon"
+            android:layout_gravity="center"
+            android:id="@+id/tvPosterName"
+            android:textSize="24sp"
+            />
+        <ImageView
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:id="@+id/ivLike"
+            android:src="@drawable/Like_button"
+            android:layout_gravity="center"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3"
+            android:layout_gravity="center"
+            android:id="@+id/tvLikeNumber"
+            android:textSize="24sp"
+            />
+    </LinearLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="100dp"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="16dp">
+
+        <Button
+            android:id="@+id/sentbutton"
+            android:background="@drawable/yes"
+            android:elevation="24dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginEnd="13dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentEnd="true" />
+    </RelativeLayout>
+
+
+</RelativeLayout>
