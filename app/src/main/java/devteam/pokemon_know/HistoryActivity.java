@@ -2,7 +2,9 @@ package devteam.pokemon_know;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
 
@@ -29,6 +31,7 @@ public class HistoryActivity extends DrawerActivity {
     private ListView listView;
     private ArrayAdapter<Map<String, String>> arrayAdapter;
     private Socket mSocket;
+    private LinearLayout progressHistory;
     {
         try {
             mSocket = IO.socket(PokemonWebService.getServer());
@@ -42,10 +45,10 @@ public class HistoryActivity extends DrawerActivity {
         setContentView(R.layout.activity_history);
         initDrawer();
         init();
-
     }
 
     private void init(){
+        progressHistory = (LinearLayout) findViewById(R.id.historyProgress);
         mSocket.on("getHistory", onGetHistory);
         mSocket.connect();
         sendRequestHistory(null,Profile.getCurrentProfile().getId());
@@ -60,6 +63,7 @@ public class HistoryActivity extends DrawerActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    progressHistory.setVisibility(View.GONE);
                     arrayAdapter = new HistoryAdapter(getApplicationContext(),R.layout.listview_history, jsonArray);
                     listView = (ListView) findViewById(R.id.listView);
                     listView.setAdapter(arrayAdapter);

@@ -48,6 +48,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -89,7 +90,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
 
-    private Button filterButton;
+    private ImageView filterButton;
     private AutoCompleteTextView autoCompleteTextView;
     private Boolean userLike;
     private int numberUserLike;
@@ -118,7 +119,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         initDrawer();
         init();
         autoCompleteTextView = (AutoCompleteTextView) findViewById(R.id.search);
-        filterButton = (Button) findViewById(R.id.button);
+        filterButton = (ImageView) findViewById(R.id.button);
         filterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -187,14 +188,13 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         mSocket.on("getPokemonByName", onGetPokemonAll);
         mSocket.connect();
         mSocket.emit("clientConnection");
-        mSocket.emit("getPokemonAll");
+//        mSocket.emit("getPokemonAll");
         pokemonHashMap = new HashMap<String, PostPokemon>();
 
         viewMarkerDialog = new Dialog(MainActivity.this);
         viewMarkerDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
         viewMarkerDialog.setContentView(R.layout.custom_view_marker_dialog);
         viewMarkerDialog.setCancelable(true);
-
         setInterval();
     }
 
@@ -208,10 +208,15 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
                 // do stuff then
                 // can call h again after work!
 //                Log.d("TimerExample", "Going for... " + time);
-                mSocket.emit("getPokemonAll");
+                Log.d("Check Interval",autoCompleteTextView.getText()+"");
+                if( !autoCompleteTextView.getText().toString().equals("") ){
+                    mSocket.emit("getPokemonByName",autoCompleteTextView.getText());
+                }else{
+                    mSocket.emit("getPokemonAll");
+                }
                 h.postDelayed(this, 1000*60);
             }
-        }, 1000); // 1 Minute delay (takes millis)
+        }, 0); // 1 Minute delay (takes millis)
     }
 
     private Emitter.Listener onGetPokemon = new Emitter.Listener() {
@@ -416,6 +421,19 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
     @Override
     public void onMapReady(final GoogleMap googleMap) {
         mMap = googleMap;
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = mMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.map_style));
+
+            if (!success) {
+                Log.e("MainActivity", "Style parsing failed.");
+            }
+        } catch (Resources.NotFoundException e) {
+            Log.e("MainActivity", "Can't find style. Error: ", e);
+        }
         mMap.setOnMyLocationButtonClickListener(this);
         enableMyLocation();
         buildGoogleApiClient();
@@ -530,11 +548,10 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mSocket.disconnect();
+//        mSocket.disconnect();
     }
 
     protected synchronized void buildGoogleApiClient() {
-        Toast.makeText(this,"buildGoogleApiClient",Toast.LENGTH_SHORT).show();
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
@@ -557,11 +574,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
 
             LatLng loc = new LatLng(lat, lng);
             mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(loc,16));
-//            Circle circle = mMap.addCircle(new CircleOptions()
-//                    .center(new LatLng(lat, lng))
-//                    .radius(100)
-//                    .strokeColor(Color.RED)
-//                    .fillColor(Color.RED));
+//            on
         }
     }
 
