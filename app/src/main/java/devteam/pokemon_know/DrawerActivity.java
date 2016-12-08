@@ -55,15 +55,15 @@ public class DrawerActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        PrimaryDrawerItem item1 = new PrimaryDrawerItem().withName(getResources().getString(R.string.drawerHome));
+        PrimaryDrawerItem item1 = new PrimaryDrawerItem().withName(getResources().getString(R.string.drawerHome)).withIcon(R.drawable.ic_home);
 
 
-        PrimaryDrawerItem item2 = new PrimaryDrawerItem().withName(getResources().getString(R.string.drawerFavorite));
+        PrimaryDrawerItem item2 = new PrimaryDrawerItem().withName(getResources().getString(R.string.drawerFavorite)).withIcon(R.drawable.ic_favorite);
 
 
-        PrimaryDrawerItem item3 = new PrimaryDrawerItem().withName(getResources().getString(R.string.drawerHistory));
+        PrimaryDrawerItem item3 = new PrimaryDrawerItem().withName(getResources().getString(R.string.drawerHistory)).withIcon(R.drawable.ic_history);
 
-        SecondaryDrawerItem secItem1 = new SecondaryDrawerItem().withName(getResources().getString(R.string.drawerLogout));
+        SecondaryDrawerItem secItem1 = new SecondaryDrawerItem().withName(getResources().getString(R.string.drawerLogout)).withIcon(R.drawable.ic_exit);
 
 
         // Create the AccountHeader
