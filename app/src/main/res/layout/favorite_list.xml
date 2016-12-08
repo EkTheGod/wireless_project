@@ -1,24 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="horizontal"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerHorizontal="false"
+    android:weightSum="1"
+    android:layout_margin="10dp"
+    android:id="@+id/bg"
+    android:background="@color/com_facebook_button_border_color_focused">
 
     <ImageView
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:src="@drawable/pokemon1"
         android:id="@+id/list_row_image"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:layout_margin="10dp"
-        />
+        android:layout_marginLeft="10dp" />
 
-    <TextView
-        android:id="@+id/list_row_text"
-        android:textStyle="bold"
-        android:text=""
-        android:layout_width="match_parent"
+
+    <GridLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="5dp"
-        android:layout_marginTop="5dp"
-        android:textSize="20sp"
-        android:textColor="#000000" />
+        android:columnCount="2"
+        android:layout_gravity="center"
+        android:layout_marginLeft="20dp">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Picachu"
+            android:textSize="25dp"
+            android:id="@+id/list_row_text"
+            android:textColor="@color/material_drawer_secondary_text"
+            />
+    </GridLayout>
+
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <ImageView
+        android:id="@+id/check"
+        android:tag="uncheck"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="center|right"
+        android:elevation="0dp"
+        android:layout_marginRight="10dp"
+        android:onClick="myClickHandler"
+        android:clickable="true"/>
+    <!--android:keepScreenOn="false"-->
+        <!--/>-->
+
 
 </LinearLayout>

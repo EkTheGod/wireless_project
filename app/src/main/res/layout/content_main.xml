@@ -13,7 +13,7 @@
         android:id="@+id/map"
         tools:context=".MapsActivity"
         android:name="com.google.android.gms.maps.SupportMapFragment"
-    />
+        />
     <RelativeLayout
         android:layout_width="match_parent"
         android:orientation="horizontal"
@@ -34,15 +34,22 @@
             />
 
         <ImageView
+            android:layout_width="50dp"
+            android:layout_gravity="center"
+            android:src="@drawable/favorite_star"
+            android:id="@+id/pinFavInMap"
+            android:layout_alignParentBottom="true"
+            android:layout_alignEnd="@+id/search"
+            android:layout_height="wrap_content" />
+
+        <ImageView
             android:text="Search"
             android:layout_width="50dp"
             android:layout_height="wrap_content"
             android:id="@+id/button"
             android:textSize="15sp"
-            android:layout_alignParentBottom="true"
-            android:layout_alignEnd="@+id/search"
             android:src="@drawable/ic_search"
-            />
-
+            android:layout_alignParentTop="true"
+            android:layout_toStartOf="@+id/pinFavInMap" />
     </RelativeLayout>
 </RelativeLayout>

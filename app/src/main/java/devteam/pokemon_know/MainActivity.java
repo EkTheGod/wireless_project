@@ -21,9 +21,13 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -59,6 +63,8 @@ import org.json.JSONObject;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 
@@ -75,6 +81,8 @@ import devteam.pokemon_know.PokemonServer.RetrivePokemon;
 
 import okhttp3.Response;
 
+import static com.facebook.internal.Utility.logd;
+
 public class MainActivity extends DrawerActivity implements OnMapReadyCallback, GoogleMap.OnMyLocationButtonClickListener,
         ActivityCompat.OnRequestPermissionsResultCallback,GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     private Random gen;
@@ -90,7 +98,6 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
     private GoogleApiClient mGoogleApiClient;
     private Location mLastLocation;
 
-    private ImageView filterButton;
     private AutoCompleteTextView autoCompleteTextView;
     private Boolean userLike;
     private int numberUserLike;
@@ -98,7 +105,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
 
 
     private DBHelper db;
-    private ImageView image;
+    private ImageView image, pinFavInMap, filterButton;
     private LatLng latLng;
     private Marker currLocationMarker;
     private Socket mSocket;
@@ -108,6 +115,8 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         } catch (URISyntaxException e) {
         }
     }
+
+    private List<Map.Entry<String,String>> favList;
 
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
@@ -123,11 +132,109 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         filterButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mSocket.emit("getPokemonByName",autoCompleteTextView.getText());
+                String poName = autoCompleteTextView.getText().toString();
+                if(poName.length() > 0)
+                    poName = autoCompleteTextView.getText().toString().substring(0, 1).toUpperCase() + autoCompleteTextView.getText().toString().substring(1).toLowerCase();
+                mSocket.emit("getPokemonByName", poName);
+            }
+        });
+
+        pinFavInMap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getFavoriteFromDB();
             }
         });
         gen = new Random();
+        loadFavoriteFromIntent();
     }
+
+    private void loadFavoriteFromIntent() {
+        Bundle b = this.getIntent().getExtras();
+        if(b != null && b.size() > 0){
+            String[] array = b.getStringArray("favoriteList");
+            Log.d("loadFavorite", String.valueOf(array.length));
+            getFavFromServer(array);
+        }
+        else {
+            mSocket.emit("getPokemonAll");
+            setInterval();
+        }
+    }
+
+    private void getFavoriteFromDB(){
+        List<Map.Entry<String,String>> listResources = new DBHelper(getApplicationContext()).getFavoriteList();
+        String[] array = new String[listResources.size()];
+        for(int i=0; i<listResources.size(); i++ ){
+            Map.Entry<String, String> temp = listResources.get(i);
+            array[i] = temp.getValue();
+        }
+        getFavFromServer(array);
+    }
+
+    private void getFavFromServer(String[] array){
+        JSONArray jArr = new JSONArray();
+        JSONObject object = new JSONObject();
+        for(int i=0; i<array.length; i++ ){
+            jArr.put(array[i]);
+        }
+        try {
+            object.put("name",jArr);
+            mSocket.emit("getPokemonFavorite", object);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    private Emitter.Listener onGetPokemonFavorite = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mMap.clear();
+                }
+            });
+            final JSONArray jsonArray = (JSONArray) args[0];
+            for(int i=0;i<jsonArray.length();i++){
+                Log.d("get Fav Ressponse", String.valueOf(jsonArray.length()));
+                final JSONObject object;
+                try {
+                    object = jsonArray.getJSONObject(i);
+                    Log.d("get Fav Ressponse name", object.getString("pokemonName").toString());
+//                    if (pokemonHashMap.containsKey(object.getString("_id").toString()))
+//                        return;
+                    PostPokemon postPokemon = new PostPokemon(
+                            object.getString("postId").toString(),
+                            object.getString("pokemonName").toString(),
+                            object.getString("lat").toString(),
+                            object.getString("long").toString(),
+                            object.getString("startTime").toString(),
+                            object.getString("endTime").toString(),
+                            object.getString("userId").toString()
+                    );
+//                    pokemonHashMap.put(object.getString("_id").toString(), postPokemon);
+                    final Pokemon pokemon = db.getPokemonByName(object.getString("pokemonName").toString());
+                    if (pokemon != null) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    markerArrayList = new ArrayList<Marker>();
+                                    createMarker(object.getString("_id").toString(),pokemon.getId(), pokemon.getName(), object.getDouble("lat"), object.getDouble("long"));
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
 
     @Override
     protected void onStop() {
@@ -136,8 +243,6 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
             mGoogleApiClient.disconnect();
         }
     }
-
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
@@ -163,7 +268,6 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         } else if (mMap != null) {
             // Access to the location has been granted to the app.
             mMap.setMyLocationEnabled(true);
-
         }
     }
 
@@ -186,6 +290,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         mSocket.on("showPokemonMarker", onShowPokemonMarker);
         mSocket.on("likePokemon", onLikePokemon);
         mSocket.on("getPokemonByName", onGetPokemonAll);
+        mSocket.on("getPokemonFavorite", onGetPokemonFavorite);
         mSocket.connect();
         mSocket.emit("clientConnection");
 //        mSocket.emit("getPokemonAll");
@@ -196,6 +301,7 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
         viewMarkerDialog.setContentView(R.layout.custom_view_marker_dialog);
         viewMarkerDialog.setCancelable(true);
         setInterval();
+        pinFavInMap = (ImageView) findViewById(R.id.pinFavInMap);
     }
 
     private void setInterval(){
@@ -478,6 +584,11 @@ public class MainActivity extends DrawerActivity implements OnMapReadyCallback, 
                     @Override
                     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                         Log.d("select", search_dialog.getText().toString());
+
+                        InputMethodManager inputManager =
+                                (InputMethodManager) getApplicationContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                        inputManager.hideSoftInputFromWindow( view.getApplicationWindowToken(), 0); //Hide keyboard when select item in autosuggest
+
                         Resources resources = getApplicationContext().getResources();
                         int resourceId = resources.getIdentifier(db.getPokemonID(search_dialog.getText().toString()), "drawable",
                                 getApplicationContext().getPackageName());
