@@ -131,21 +131,11 @@ public class DBHelper extends SQLiteOpenHelper {
             Log.e("Error", "error while add pokemon");
             e.printStackTrace();
         } finally {
-
-//            addToFav(new Pokemon(
-//                    "5", //ID
-//                    "Charmeleon",  //Name
-//                    1, //Gen
-//                    "pokemon5" //Image Path
-//            ));
-
             sqLiteDatabase.close();
             reader.close();
         }
         Log.d("Finish", "DONE loading resource.");
     }
-
-
 
     public long addPokemon2(Pokemon pokemon) {
         ContentValues values = new ContentValues();

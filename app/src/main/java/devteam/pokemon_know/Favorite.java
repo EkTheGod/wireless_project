@@ -1,5 +1,6 @@
 package devteam.pokemon_know;
 
+import android.content.Intent;
 import android.content.res.Resources;
 import android.database.Cursor;
 import android.database.MatrixCursor;
@@ -44,6 +45,7 @@ public class Favorite extends DrawerActivity {
     private Toolbar toolbar;
     private ListView fav;
     private SearchView searchView;
+    private ImageView pinmap;
     int[] favResId;
     String[] favList;
     private List<Map.Entry<String,String>> listResources;
@@ -65,19 +67,31 @@ public class Favorite extends DrawerActivity {
         fav = (ListView) findViewById(R.id.favlist);
         fav.setBackgroundColor(Color.rgb(255,255,255));
 
+        pinmap = (ImageView) findViewById(R.id.favToSearch);
+        pinmap.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+                Bundle b=new Bundle();
+                b.putStringArray("favoriteList", favList);
+
+                Intent main = new Intent(getApplicationContext(), MainActivity.class);
+                main.putExtras(b);
+                startActivity(main);
+            }
+        });
+
         r = (LinearLayout) findViewById(R.id.refresh);
         r.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                try {
-                    loadList();
-                }
-                catch (IOException e){
-                    e.printStackTrace();
-                }
+                load();
             }
         });
+        load();
+    }
 
+    private void load(){
         try {
             loadList();
         }

@@ -16,19 +16,30 @@
             android:layout_width="260dp"
             android:layout_height="match_parent"
             android:id="@+id/search"
-            android:background="@color/common_google_signin_btn_text_dark_default" />
+            android:background="@color/common_google_signin_btn_text_dark_default"
+            android:layout_marginTop="10dp"
+            android:layout_marginLeft="10dp" />
 
-        <Button
-            android:text="Search"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center"
             android:id="@+id/button"
+            android:src="@drawable/search_main"
             android:layout_alignBaseline="@+id/input"
             android:layout_alignBottom="@+id/input"
             android:layout_alignParentEnd="true"
+            android:layout_marginLeft="10dp" />
+
+        <ImageView
+            android:layout_width="30dp"
+            android:layout_gravity="center"
+            android:src="@drawable/favorite_star"
+            android:id="@+id/pinFavInMap"
             android:layout_marginLeft="10dp"
-            android:layout_weight="3.5"
-            android:textSize="15sp" />
+            android:layout_marginRight="10dp"
+            android:layout_height="30dp" />
+
     </LinearLayout>
     <fragment xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"

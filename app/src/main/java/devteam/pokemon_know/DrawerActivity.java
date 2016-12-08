@@ -99,13 +99,17 @@ public class DrawerActivity extends AppCompatActivity {
                             case 1: // Home
                                 if( !className.equals("MainActivity") )
                                     finish();
+                                    intent = new Intent(getApplicationContext(), MainActivity.class);
+                                    startActivity(intent);
                                 break;
                             case 2: // Favorite
+                                finish();
                                 intent = new Intent(getApplicationContext(), Favorite.class);
                                 startActivity(intent);
                                 break;
                             case 3: //History
                                 if( className.equals("MainActivity") ) {
+                                    finish();
                                     Intent history = new Intent(getApplicationContext(), HistoryActivity.class);
                                     startActivity(history);
                                 }else if( className.equals("Favorite") ){
